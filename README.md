@@ -1,106 +1,139 @@
-# cloud-ZK
-##  A toolkit for developing ZKP acceleration in the cloud
+# Read/Write to Device in Rust
 
-Follow the instructions below in order to use AWS EC2 F1 FPGA instance in your code to get accelerated MSM. 
-#### Note: Before continuing, please prepare an AFI according to our [guide](/A_Step-by-step_guide_for_building_an_AWS_AFI.MD). Alternatively, you can use [Ingonyama AFI](/A_Step-by-step_guide_for_building_an_AWS_AFI.MD#load-the-afi). 
+**Disclaimer:** This release is aimed at extending the design and handling of HW, this design isn’t backward compatible with previous and F1 support is currently broken, will be fixed in short time.
 
+:fire: More Ingonyama AWS F1 AFIs will be public soon, stay tuned!
 
-<!-- Install the MSM Client -->
-## Install the MSM Client
+This Rust package offers a basic AXI infrastructure and the ability to work with user logic through custom modules.
+The custom modules provided are designed for [MSM](src/ingo_msm) and [Poseidon hash](src/ingo_hash) and allow for the loading of user logic onto an FPGA.
 
+In addition to supporting our binary, this library allows work with custom builds using warpshell https://github.com/Quarky93/warpshell.
 
-* Install and run the MSM client on the F1 instance :
+## New Design
 
+The new design is based on the idea of how a pool connection works with a database. Accordingly, this level includes interaction with a specific connection, and all things concerning connection selection, multiple connections, as well as state machines should be performed by a management layer.
 
-* Clone ingonyama-zk/cloud-zk client design github:
+On the connection side, we can provide an API to retrieve any necessary data (including firewall status, current task number, etc.) for management. The main design components are described below.
 
-      NOTE: the Ingonyama client code is written in Rust.
+### DriverClient
 
-Instructions to install Rust can be <a href="https://www.rust-lang.org/tools/install">found here</a>. 
+The [DriverClient](src/driver_client/) module is designed to establish a connection between the FPGA/AWS and a known type of card, such as the C1100 card. It does not possess any knowledge about primitives.
 
-* Create a dir for the Ingonyama client in your project
+The [DriverClient](src/driver_client/) provides basic IO methods and can load a binary, as well as provide specific and debug information about current HW. For a specific card type, the [DriverConfig](src/driver_client/dclient.rs) remains the same and can be accessed using the `driver_client_c1100_cfg` function.
 
-```sh 
-mkdir -p  <ingonyama-zk-client-folder-name>
+It is important to note that the high-level management layer determines which client and primitive should be used. The [DriverClient](src/driver_client/) can be overused in this process.
+
+How to create a new connection:
+
+```rust
+let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
 ```
 
-* Clone the Ingonyama client
+### DriverPrimitive
 
-```sh
-$ cd <ingonyama-zk-client-folder-name>
-$ git clone https://github.com/ingonyama-zk/cloud-zk.git  (TBD)
-$ cd <ingonyama-zk-client-folder-name>/rust-rw-device/
+To simplify the process of using different primitives, the [DriverPrimitiveClient](src/driver_client/) was created. It is a wrapper around a [DriverClient](src/driver_client/) connection and includes the necessary configuration data for the primitive, an implementation of a common trait called [DriverPrimitiveClient](src/driver_client/), and public and private methods that are only valid for that primitive.
+
+The configuration (e.g. for msm there are addresses space and curve description) for each primitive is provided based on the type of primitive, so there is no need to configure this manually on the high-level manager layer.
+
+To create a new primitive instance for MSM, for example, one would use the following code:
+
+```rust
+let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+let driver = msm_api::MSMClient::new(
+ msm_api::MSMInit {
+ mem_type: msm_api::PointMemoryType::DMA,
+ is_precompute: false,
+ curve: msm_api::Curve::BLS381,
+ },
+ dclient,
+);
 ```
 
-<!--Install the Linux xdma drivers-->
-## Install the linux xdma drivers
+The [DriverPrimitiveClient](src/driver_client/) is a trait that includes the basic functions of interaction with HW regarding calculations on a particular primitive. It can work with any type of data, whether it is a basic type or a tuple. The trait includes functions for initialization, setting input data, waiting for results, and getting results.
 
-* Go to xdma dir and run make
+For data encapsulation, methods specific to each primitive can be divided into public (mainly methods for retrieving data from a particular offset) and private (methods for recording data or retrieving specific data for internal calculations).
 
-```sh
-$ cd <ingonyama-zk-client-folder-name>/xdma
-$ make
-```
-* To install drivers, run the following as root
+### General Example of usage
 
-```sh
-$ sudo make install
-$ sudo modprobe xdma
-```
-* Allow driver access
+We will refer to any type of primitive as `DriverPrimitiveClient` to show generality. And any abbreviation for a specific primitive will be replaced by `dpc` (e.g. `dpc_api` can be `msm_api` )
 
-```sh
-sudo chmod 77 /dev/xdma0_user
-sudo chmod 77 /dev/xdma0_c2h_0
-sudo chmod 77 /dev/xdma0_c2h_1
-sudo chmod 77 /dev/xdma0_h2c_0
-```
-Once successful, drivers are 
-<!--MSM client functionality-->
-## MSM client functionality
+```rust
+ let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+ let driver = dpc_api:: DriverPrimitiveClient::new(dpc_api::dpc_type, dclient);
 
-In order to run the MSM core on a custom input, one can use rust-rw-device as follows, using the function ''msm_calc'' in rw_msm_to_dram.rs file.
+ let params = driver.get_loaded_binary_parameters();
+ let params_parse = dpc_api::DPCImageParametrs::parse_image_params(params[1]);
 
-### msm_calc_biguint(points: &Vec<BigUint>, scalars: &Vec<BigUint>, size: usize) -> ([BigUint; 3],Duration,u8)
-This function receives 3 parameters:
-1) points: Vec\<BigUint>
-2) scalars: Vec\<BigUint>
-3) size: \<usize>
-
-### msm_calc_u32(points: &Vec<u32>, scalars: &Vec<u32>, size: usize) -> ([Vec<u32> ;3],Duration,u8)
-This function receives 3 parameters:
-1) points: Vec\<u32>
-2) scalars: Vec\<u32>
-3) size: \<usize>
-This function is built to run with bytestreams of points scalars, all data should be represented as little endian.
-
-The MSM we want to compute is with points given in affine coordinates: x_1, y_1,...,x_n, y_n, and scalars s_1,...,s_n.
-* The points input will be a 2n size vector that contains the values: [(x_1,y_1),...,(x_n,y_n)] (i.e., the points one after the other).
-* The scalar vector will be an n size vector containing [s_1,...,s_n].
-
-Each BigUint element in these vectors is expected to be an unsigned big integer of size at most 48 bytes (1152 bits).
-The output of the function is a vector containing the result in projective coordinates and therefore contains a 48-byte BigUint vector with 3 elements (i.e., (x,y,z) of the resulting point).
-
-the functions return single point in Projective representation and task duration -> (x, y, z, duration).
-
-<!--Using the MSM client-->
-## Using the MSM client
-
-Add to your (rust) code the appropriate “use directive”:
-```rust 
-use rust_rw_device::rw_msm_to_dram;
+ let _ = driver.initialize(dpc_param);
+ let _ = driver.set_data(dpc_input);
+ driver.wait_result();
+ let dpc_res = driver.result(None).unwrap().unwrap();
 ```
 
-Calling the MSM function:
-Call the function `msm_calc_biguint(&points, &scalars, size)` or `msm_calc_u32(&points, &scalars, size)` in rw_msm_to_dram.rs file, when the MSM calculation is needed.
- 
-<!-- License -->
-## License 
-The code is released under the GNU General Public License v3.0 license. See <a href="https://github.com/ingonyama-zk/cloud-zk/blob/main/LICENSE.md">LICENSE.md</a> for more information.
- 
- 
- 
+## MSM (Multi Scalar Multiplication) Module
 
- 
- 
+This module supports three curves (BLS12_377, BLS12_381, BN254) and two types of point storage on HW: DMA and HBM.
 
+This function sets data for compute MSM and has three different cases depending on the input parameters.
+
+1. DMA only mode: - Addres for point in [`MSMConfig`].
+
+```rust
+MSMInput = {
+    points: Some(points),
+    scalars,
+    nof_elements: msm_size,
+    hbm_point_addr: None,
+}
+```
+
+2. HBM mode set points to HBM and scalars by DMA: points will be loaded on hbm at address `hbm_addr` with an `offset`.
+
+```rust
+MSMInput = {
+    points: Some(points),
+    scalars,
+    nof_elements: msm_size,
+    hbm_point_addr: Some(hbm_addr, offset),
+}
+```
+
+3. HBM mode set only scalars: points were loaded in previous iteretion on HBM.
+
+```rust
+MSMInput = {
+    points: None,
+    scalars,
+    nof_elements: msm_size,
+    hbm_point_addr: Some(hbm_addr, offset),
+}
+```
+
+## Poseidon Module
+
+## Running tests and benchmark
+
+### MSM (Multi Scalar Multiplication) tests
+
+To run tests for the MSM primitive, use the following command:
+
+```
+
+RUST_LOG=<LEVEL_LOG> cargo test -- <TEST_FILE> -- <TEST_NAME>
+
+```
+
+Also, different tests can require additional parameters:
+`ID` `FILENAME`, and `MSM_SIZE`.
+
+Replace `<LEVEL_LOG>` with the desired log level (e.g. info, debug). Set `FILENAME` with the path to the binary
+file and `ID` with the number of the FPGA slot.
+Also, it's possible to set up a number of points in MSM in the `MSM_SIZE` variable.
+
+If the values of `ID` and `MSM_SIZE` are not provided, they will be defaulted to `ID=0` and `MSM_SIZE=8192`.
+
+### Poseidon tests
+
+```
+
+```
