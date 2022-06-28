@@ -1,0 +1,15 @@
+*DS_STORE*
+*DS_Store*
+.vscode/
+/.idea
+target
+cmake-build-debug
+build
+Cargo.lock
+
+## misc 
+Cargo.lock
+*DS_STORE*
+*DS_Store*
+*.csv
+.env
