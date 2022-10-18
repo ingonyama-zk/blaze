@@ -10,7 +10,7 @@ mod rw_msm_to_dram;
 
 use ark_ec::{ProjectiveCurve, AffineCurve};
 use ark_ff::{PrimeField, Field, BigInteger};
-use ark_bls12_377::{G1Projective as G, G1Affine as GAffine, Fr, g1, Fq};
+use rust_rw_device::curve::{G1Projective as G, G1Affine as GAffine, Fr, g1, Fq};
 use ark_std::{UniformRand};
 
 use pbr::ProgressBar;

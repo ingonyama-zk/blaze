@@ -4,7 +4,11 @@ use std::time::{Instant};
 use num_bigint::BigUint;
 
 const CHUNK_SIZE: usize = 1024;
+#[cfg(feature = "bls12-377")]
 const BYTE_SIZE_POINT_COORD: usize = 48;
+#[cfg(feature = "bn254")]
+const BYTE_SIZE_POINT_COORD: usize = 32;
+
 const BYTE_SIZE_SCALAR: usize = 32;
 const INGO_MSM_CTRL_BASEADDR: u64 = 0x0010_0000;
 const DMA_SCALARS_BASEADDR: u64 = 0x0000_0010_0000_0000;
@@ -105,9 +109,9 @@ pub fn msm_calc(points: &Vec<BigUint>, scalars: &Vec<BigUint>, size: usize) -> (
     let z_chunk = &result[0..48];
     let y_chunk = &result[48..96];
     let x_chunk = &result[96..144];
-    println!("X bytes {:02X?}", z_chunk);
+    println!("X bytes {:02X?}", x_chunk);
     println!("Y bytes {:02X?}", y_chunk);
-    println!("Z bytes {:02X?}", x_chunk);
+    println!("Z bytes {:02X?}", z_chunk);
     println!("Pop result...");
     set_ingo_msm_pop_task(axi);
     return ([BigUint::from_bytes_le(x_chunk),BigUint::from_bytes_le(y_chunk),BigUint::from_bytes_le(z_chunk)],duration,result_label)
@@ -174,9 +178,9 @@ fn msm_core_scalar_only(size: usize, scalars_bytes: Vec<u8>) -> (Duration, Vec<u
     let z_chunk = &result[0..48];
     let y_chunk = &result[48..96];
     let x_chunk = &result[96..144];
-    println!("X bytes {:02X?}", z_chunk);
+    println!("X bytes {:02X?}", x_chunk);
     println!("Y bytes {:02X?}", y_chunk);
-    println!("Z bytes {:02X?}", x_chunk);
+    println!("Z bytes {:02X?}", z_chunk);
     println!("Pop result...");
     set_ingo_msm_pop_task(axi);
     (duration, z_chunk.to_vec(), y_chunk.to_vec(), x_chunk.to_vec())
@@ -224,12 +228,12 @@ pub fn msm_core(points_bytes: Vec<u8>, scalars_bytes: Vec<u8>,size: usize) -> (V
     let result = read_result(&axi);
     let result_label = get_ingo_msm_result_label(&axi)[0]; 
     println!("Result label: {}", result_label);
-    let z_chunk = &result[0..48];
-    let y_chunk = &result[48..96];
-    let x_chunk = &result[96..144];
-    println!("X bytes {:02X?}", z_chunk);
+    let z_chunk = &result[0..BYTE_SIZE_POINT_COORD];
+    let y_chunk = &result[BYTE_SIZE_POINT_COORD..2 * BYTE_SIZE_POINT_COORD];
+    let x_chunk = &result[2 * BYTE_SIZE_POINT_COORD..3 * BYTE_SIZE_POINT_COORD];
+    println!("X bytes {:02X?}", x_chunk);
     println!("Y bytes {:02X?}", y_chunk);
-    println!("Z bytes {:02X?}", x_chunk);
+    println!("Z bytes {:02X?}", z_chunk);
     println!("Pop result...");
     set_ingo_msm_pop_task(axi);
     (z_chunk.to_vec(), y_chunk.to_vec(), x_chunk.to_vec(),duration, result_label)
@@ -342,6 +346,10 @@ fn get_formatted_unified_points_from_biguint(points: &Vec<BigUint>) -> Vec<u8> {
         let mut bytes_array = points[i].to_bytes_le();
         bytes_array.extend(std::iter::repeat(0).take(BYTE_SIZE_POINT_COORD-bytes_array.len()));
         points_bytes.extend(bytes_array);
+        #[cfg(feature = "bn254")]
+        if (i as i32 - 1) % 2 == 0 {
+            points_bytes.extend(std::iter::repeat(0).take(32));
+        }
     }
     points_bytes
 }
@@ -358,10 +366,16 @@ fn get_formatted_unified_scalars_from_u32(scalars: &Vec<u32>) -> Vec<u8> {
 
 fn get_formatted_unified_points_from_u32(points: &Vec<u32>) -> Vec<u8> {
     let mut points_bytes: Vec<u8> = Vec::new();
-    for i in 0..points.len()/12{
-        let mut bytes_array = u32_vec_to_u8_vec(&points[i*12 .. i*12 + 12].to_vec());
-        bytes_array.extend(std::iter::repeat(0).take(BYTE_SIZE_POINT_COORD-bytes_array.len()));
+    const PAD_SIZE: usize = BYTE_SIZE_POINT_COORD / 4;
+
+    for i in 0..points.len() / PAD_SIZE {
+        let mut bytes_array = u32_vec_to_u8_vec(&points[i * PAD_SIZE..i * PAD_SIZE + PAD_SIZE].to_vec());
+        bytes_array.extend(std::iter::repeat(0).take(BYTE_SIZE_POINT_COORD - bytes_array.len()));
         points_bytes.extend(bytes_array);
+        #[cfg(feature = "bn254")]
+        if (i as i32 - 1) % 2 == 0 {
+            points_bytes.extend(std::iter::repeat(0).take(32));
+        }
     }
     points_bytes
 }

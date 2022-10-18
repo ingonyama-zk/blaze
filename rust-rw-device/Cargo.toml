@@ -12,8 +12,13 @@ ark-algebra-intro = "0.3.0"
 ark-ec = "0.3.0"
 ark-std = "0.3.0"
 ark-ff = "0.3.0"
-arkworks-setups = "1.1.1"
-ark-bls12-377 = "0.3.0"
+ark-bls12-377 = { version="0.3.0", optional=true }
+ark-bn254 =  { version="*", optional=true}
 ark-serialize = "0.3.0"
 pbr = "1.0.4"
 sodiumoxide = "0.2.7"
+
+[features]
+default = [ "bls12-377" ]
+bls12-377 = [ "ark-bls12-377" ]
+bn254 = [ "ark-bn254" ]
