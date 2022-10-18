@@ -32,6 +32,6 @@ pub fn msm_correctness() {
         .collect::<Vec<BigUint>>();
 
 
-    let msm_cloud_vec = ingo_x::msm_cloud::<G1Affine>(points_as_big_int, scalar_as_big_int);
+    let msm_cloud_vec = ingo_x::msm_cloud::<G1Affine>(&points_as_big_int, &scalar_as_big_int);
     assert_eq!(msm_ark_vec, msm_cloud_vec.0)
 }
