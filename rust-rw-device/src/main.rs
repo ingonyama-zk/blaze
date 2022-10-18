@@ -15,10 +15,14 @@ use ark_std::{UniformRand};
 
 use pbr::ProgressBar;
 
+use std::str::FromStr;
+
 fn main(){
     println!("Generating MSM input ...");
     init();
-    let size = 1024; //2^10
+    let test_npow = std::env::var("TEST_NPOW").unwrap_or("10".to_string());
+    let n_points = i32::from_str(&test_npow).unwrap();
+    let size = 1 << n_points; // 2 ^ n_points
     let tests: usize = 12;
     let (points, scalars, msm_result) = input_generator_biguint(size);
     let result = msm_calc_biguint(&points, &scalars, size);
@@ -46,6 +50,7 @@ fn result_check_biguint(result: [BigUint; 3], msm_result: ark_ec::short_weierstr
     let point = GAffine::new(aff_x, aff_y, false);
     println!("Is point on the curve {}",point.is_on_curve());
     println!("Is Result Equal To Expected {}", point.to_string() == msm_result.into_affine().to_string());
+    assert_eq!(point, msm_result);
 }
 
 fn result_check_u32(result: [Vec<u32>; 3], msm_result: ark_ec::short_weierstrass_jacobian::GroupProjective<g1::Parameters>) {
@@ -60,6 +65,7 @@ fn result_check_u32(result: [Vec<u32>; 3], msm_result: ark_ec::short_weierstrass
     let point = GAffine::new(aff_x, aff_y, false);
     println!("Is point on the curve {}",point.is_on_curve());
     println!("Is Result Equal To Expected {}", point.to_string() == msm_result.into_affine().to_string());
+    assert_eq!(point, msm_result);
 }
 
 fn input_generator_biguint(nof_elements: usize) -> (Vec<BigUint>, Vec<BigUint>, ark_ec::short_weierstrass_jacobian::GroupProjective<g1::Parameters>) {
