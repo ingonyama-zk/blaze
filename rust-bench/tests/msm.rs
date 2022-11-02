@@ -25,7 +25,7 @@ pub fn msm_correctness() {
             .to_vec()
             .into_iter()
             .map(|s| BigInteger256::try_from(s).unwrap())
-            .collect::<Vec<BigInteger256>>(),
+            .collect::<Vec<BigInteger256>>(), //this is safe but slow conversion
     );
 
     let mut msm_result_cpu_ingo_ref = G1Projective::zero(); //TODO: same as G1Affine::prime_subgroup_generator().mul(0);
