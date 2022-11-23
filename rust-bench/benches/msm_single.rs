@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use ark_bls12_377::G1Affine;
+use rust_rw_device::curve::G1Affine;
 use ark_ff::BigInteger256;
 use criterion::{Criterion, criterion_group, criterion_main};
 

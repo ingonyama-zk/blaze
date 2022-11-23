@@ -1,4 +1,3 @@
-use ark_bls12_377::G1Affine;
 use ark_ec::{AffineCurve, ProjectiveCurve};
 use ark_ff::PrimeField;
 use ark_std::UniformRand;
@@ -23,10 +22,10 @@ pub fn generate_points_scalars<G: AffineCurve>(len: usize) -> (Vec<G>, Vec<G::Sc
 }
 
 pub fn generate_points_scalars_big_uint<G: AffineCurve>(n_points: i32) -> (Vec<BigUint>, Vec<BigUint>) {
-    let (points, scalars) = generate_points_scalars::<G1Affine>(1usize << n_points);
+    let (points, scalars) = generate_points_scalars::<rust_rw_device::curve::G1Affine>(1usize << n_points);
 
     let points_as_big_int = points.into_iter()
-        .map(|point| [point.x.into_repr().into(), point.y.into_repr().into()])
+        .map(|point| [point.y.into_repr().into(), point.x.into_repr().into()])
         .flatten()
         .collect::<Vec<BigUint>>();
 
