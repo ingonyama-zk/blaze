@@ -14,8 +14,6 @@ pub fn msm_correctness() {
     let test_npow = std::env::var("TEST_NPOW").unwrap_or("11".to_string());
     let n_points = i32::from_str(&test_npow).unwrap();
 
-    //TODO: conversion of inputs/outputs can be much much simplified as done for Sppark GPU and Ingo FPGA MSM
-
     let len = 1 << n_points;
     let (points, scalars) = util::generate_points_scalars::<G1Affine>(len);
 
