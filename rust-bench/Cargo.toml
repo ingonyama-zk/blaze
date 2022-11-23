@@ -28,6 +28,6 @@ path = "benches/msm_single.rs"
 harness = false
 
 [features]
-default = [ "bls12-377" ]
+default = [ "bn254" ]
 bls12-377 = [ "rust-rw-device/bls12-377" ]
 bn254 = [ "rust-rw-device/bn254" ]
