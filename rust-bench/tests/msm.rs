@@ -11,7 +11,7 @@ use ingo_x::util;
 
 #[test]
 pub fn msm_correctness() {
-    let test_npow = std::env::var("TEST_NPOW").unwrap_or("23".to_string());
+    let test_npow = std::env::var("TEST_NPOW").unwrap_or("11".to_string());
     let n_points = i32::from_str(&test_npow).unwrap();
 
     //TODO: conversion of inputs/outputs can be much much simplified as done for Sppark GPU and Ingo FPGA MSM
@@ -55,8 +55,9 @@ pub fn msm_correctness() {
     let proj_x_field = Fq::from_le_bytes_mod_order(&result[0].to_bytes_le());
     let proj_y_field = Fq::from_le_bytes_mod_order(&result[1].to_bytes_le());
     let proj_z_field = Fq::from_le_bytes_mod_order(&result[2].to_bytes_le());
-    let aff_x = proj_x_field.mul(proj_z_field.inverse().unwrap());
-    let aff_y = proj_y_field.mul(proj_z_field.inverse().unwrap());
+    let z_inverse = proj_z_field.inverse().unwrap();
+    let aff_x = proj_x_field.mul(z_inverse);
+    let aff_y = proj_y_field.mul(z_inverse);
     let cloud_aff_point = G1Affine::new(aff_x, aff_y, false);
 
     assert_eq!(cloud_aff_point, msm_ark_projective); //raw vec comparison isn't always meaningful
