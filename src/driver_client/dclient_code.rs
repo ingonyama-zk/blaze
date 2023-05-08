@@ -41,6 +41,9 @@ impl From<FIREWALL_ADDR> for u64 {
 pub enum CMS_ADDR {
     ADDR_CPU2HIF_CMS_INITIALIZE = 0x020000,
     ADDR_HIF2CPU_CMS_CONTROL_REG = 0x0018,
+    TEMP_MAX = 0x00F8,
+    TEMP_AVG = 0x00FC,
+    TEMP_INST = 0x0100,
 }
 impl From<CMS_ADDR> for u64 {
     fn from(addr: CMS_ADDR) -> Self {

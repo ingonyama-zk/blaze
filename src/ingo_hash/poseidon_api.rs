@@ -10,6 +10,8 @@ use crate::{
 use csv;
 use num::{bigint::BigUint, Num};
 
+use super::dma_buffer::DmaBuffer;
+
 pub enum Hash {
     Poseidon,
 }
@@ -29,6 +31,11 @@ pub struct PoseidonResult {
     pub hash_byte: [u8; 32],
     pub hash_id: u32,
     pub layer_id: u32,
+}
+
+pub struct PoseidonReadResult<'a> {
+    pub expected_result: usize,
+    pub result_store_buffer: &'a mut DmaBuffer,
 }
 
 impl PoseidonResult {
@@ -73,7 +80,7 @@ impl PoseidonResult {
     }
 }
 
-impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResult>>
+impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResult>, PoseidonReadResult<'_>>
     for PoseidonClient
 {
     fn new(_ptype: Hash, dclient: DriverClient) -> Self {
@@ -116,6 +123,9 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         self.set_merkle_tree_height(param.tree_height)?;
         self.set_tree_start_layer_for_tree(param.tree_mode)?;
         log::debug!("set merkle tree height: {:?}", param.tree_height);
+        
+        self.dclient.initialize_cms()?;
+        self.dclient.set_dma_firewall_prescale(0xFFFF)?;
         Ok(())
     }
 
@@ -130,22 +140,15 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         todo!()
     }
 
-    fn result(&self, expected_result: Option<usize>) -> Result<Option<Vec<PoseidonResult>>> {
-        let mut results: Vec<PoseidonResult> = vec![];
+    fn result(&self, _param: Option<PoseidonReadResult>) -> Result<Option<Vec<PoseidonResult>>> {
+        let params = _param.unwrap();
+        
+        self.dclient.dma_read_into(self.dclient.cfg.dma_baseaddr, DMA_RW::OFFSET, params.result_store_buffer);
+        
+        assert_eq!(params.result_store_buffer.len(), params.expected_result * 64);
 
-        loop {
-            let num_of_pending_results = self.get_num_of_pending_results()?;
-
-            if results.len() >= expected_result.unwrap() {
-                break;
-            }
-
-            let res = self.get_raw_results(num_of_pending_results)?;
-
-            let mut result = PoseidonResult::parse_poseidon_hash_results(res);
-            results.append(&mut result);
-        }
-
+        let results = PoseidonResult::parse_poseidon_hash_results(params.result_store_buffer.get().to_vec());
+        
         Ok(Some(results))
     }
 }

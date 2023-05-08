@@ -80,7 +80,7 @@ pub struct MSMResult {
     pub result_label: u32,
 }
 
-impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
+impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult, usize> for MSMClient {
     /// Creates a new [`MSMClient`].
     fn new(init: MSMInit, dclient: DriverClient) -> Self {
         MSMClient {

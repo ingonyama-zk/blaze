@@ -9,7 +9,7 @@
 use crate::{
     driver_client::dclient_code::*,
     error::*,
-    utils::{deserialize_hex, open_channel, AccessFlags},
+    utils::{deserialize_hex, open_channel, AccessFlags}, ingo_hash::dma_buffer::DmaBuffer,
 };
 use serde::Deserialize;
 use std::{fmt::Debug, os::unix::fs::FileExt, thread::sleep, time::Duration};
@@ -26,7 +26,7 @@ pub trait ParametersAPI {
 /// The generic type parameters `T`, `P`, `I`, and `O` represent
 ///  the primitive type, parameter for initialization, input data, and output data respectively.
 /// All methods return a `Result` indicating success or failure.
-pub trait DriverPrimitive<T, P, I, O> {
+pub trait DriverPrimitive<T, P, I, O, R> {
     /// The `new` method creates a new instance of the driver primitive type with the given primitive type and driver client.
     fn new(ptype: T, dclient: DriverClient) -> Self;
     /// The `loaded_binary_parameters` method returns
@@ -43,7 +43,7 @@ pub trait DriverPrimitive<T, P, I, O> {
     fn wait_result(&self) -> Result<()>;
     /// The `result` method returns the output data from the driver primitive,
     ///  optionally with a specific parameter. If there is no output data available, it returns `None`.
-    fn result(&self, _param: Option<usize>) -> Result<Option<O>>;
+    fn result(&self, _param: Option<R>) -> Result<Option<O>>;
 }
 
 /// The [`DriverConfig`] is a struct that defines a set of 64-bit unsigned integer (`u64`)
@@ -173,6 +173,16 @@ impl DriverClient {
         Ok(())
     }
 
+    pub fn monitor_tempeture(&self) -> Result<(u32, u32, u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + 0x028000;
+
+        let temp_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_MAX).unwrap();
+        let temp_avg = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_AVG).unwrap();
+        let temp_inst = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_INST).unwrap();
+            
+        Ok((temp_inst, temp_avg, temp_max))
+    } 
+
     // HBICAP
     /// Checking HBICAP status register. Return `true` if zero (previous operation done) and
     /// second (Indicates that the EOS is complete) bit setting to 1.
@@ -288,6 +298,12 @@ impl DriverClient {
             self.ctrl_write_u32(addr, FIREWALL_ADDR::UNBLOCK, 1)?;
             Ok(())
         }
+    }
+
+    pub fn set_dma_firewall_prescale(&self, pre_scale: i32) -> Result<()> {
+        self.ctrl_write(self.cfg.dma_firewall_baseaddr, 0x230 as u64, &pre_scale.to_le_bytes())?;
+
+        Ok(())
     }
 
     pub fn unblock_firewalls(&self) -> Result<()> {
@@ -493,6 +509,25 @@ impl DriverClient {
 
         crate::getter_log!(read_data, offset);
         Ok(read_data)
+    }
+
+    pub fn dma_read_into<T: Debug + Into<u64> + Copy>(
+        &self,
+        base_address: u64,
+        offset: T,
+        // todo: add optional size
+        buffer: &mut DmaBuffer,
+    ) {        
+        self.dma_c2h_read
+            .read_exact_at(buffer.as_mut_slice(), base_address + offset.into())
+            .map_err(|e| DriverClientError::ReadError {
+                offset: format!("{:?}", offset),
+                source: e,
+            });
+
+        //.unwrap_or_else(|_| panic!("Failed to get data from label {:?}.", offset));
+        //log::debug!("Getting data of size [ {:?} ] from dma", buffer.len());
+        crate::getter_log!(buffer, offset);
     }
 
     /// The method for writing data from host memory into FPGA.
