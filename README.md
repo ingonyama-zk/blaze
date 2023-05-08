@@ -1,8 +1,14 @@
-# Read/Write to Device in Rust
+# BLAZE
+ <div align="center">blaze is a Rust library for ZK acceleration on Xilinx FPGAs.</div>
+
+ ![Ingo_BlazeFire_1a](https://user-images.githubusercontent.com/2446179/236798848-b5a49f75-1914-4565-8780-22165b960513.png)
+
 
 **Disclaimer:** This release is aimed at extending the design and handling of HW, this design isn’t backward compatible with previous and F1 support is currently broken, will be fixed in short time.
 
 :fire: More Ingonyama AWS F1 AFIs will be public soon, stay tuned!
+
+# Read/Write to Device in Rust
 
 This Rust package offers a basic AXI infrastructure and the ability to work with user logic through custom modules.
 The custom modules provided are designed for [MSM](src/ingo_msm) and [Poseidon hash](src/ingo_hash) and allow for the loading of user logic onto an FPGA.
