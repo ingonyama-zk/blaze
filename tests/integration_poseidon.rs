@@ -286,7 +286,7 @@ fn test_build_tree_1gb() {
             poseidon_temp.dclient.enable_hbm_temp_monitoring();
             loop {
                 thread::sleep(Duration::from_millis(250));
-                let (temp_inst, temp_avg, temp_max) = poseidon_temp.dclient.monitor_tempeture().unwrap();
+                let (temp_inst, temp_avg, temp_max) = poseidon_temp.dclient.monitor_temperature().unwrap();
                 log::debug!("temp_inst: {} temp_avg: {} temp_max: {}", temp_inst, temp_avg, temp_max);
             }
         });

@@ -173,7 +173,7 @@ impl DriverClient {
         Ok(())
     }
 
-    pub fn monitor_tempeture(&self) -> Result<(u32, u32, u32)> {
+    pub fn monitor_temperature(&self) -> Result<(u32, u32, u32)> {
         let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + 0x028000;
 
         let temp_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_MAX).unwrap();
