@@ -113,7 +113,7 @@ impl DriverClient {
     /// The example shows how to initialize a new instance of basic Driver API for FPGA slot `0`
     /// and the current addresses.
     /// ```rust
-    /// use ingo_fpga::shell::shell_api::{DriverClient, DriverConfig};
+    /// use ingo_blaze::shell::shell_api::{DriverClient, DriverConfig};
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     /// ```
@@ -223,7 +223,7 @@ impl DriverClient {
     /// # Examples
     ///
     /// ```rust
-    /// use ingo_fpga::shell::{shell_api::DriverClient, shell_hw_code::*};
+    /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     ///
@@ -273,7 +273,7 @@ impl DriverClient {
     /// # Examples
     ///
     /// ```rust
-    /// use ingo_fpga::shell::shell_api::DriverClient;
+    /// use ingo_blaze::shell::shell_api::DriverClient;
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     /// dclient.set_firewall_block(dclient.cfg.ctrl_firewall_baseaddr, true); // ctrl firewall is now blocked
@@ -314,7 +314,7 @@ impl DriverClient {
     ///
     /// # Examples
     /// ```rust
-    /// use ingo_fpga::shell::{shell_api::DriverClient, shell_hw_code::*};
+    /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     ///
@@ -388,7 +388,7 @@ impl DriverClient {
     /// # Examples
     ///
     /// ```rust
-    /// use ingo_fpga::shell::{shell_api::DriverClient, shell_hw_code::*};
+    /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     ///    
@@ -465,7 +465,7 @@ impl DriverClient {
     /// # Examples
     ///
     /// ```rust
-    /// use ingo_fpga::shell::{shell_api::DriverClient, shell_hw_code::*};
+    /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     /// let size_of_input = 16;
@@ -510,7 +510,7 @@ impl DriverClient {
     /// # Examples
     ///
     /// ```rust
-    /// use ingo_fpga::shell::{shell_api::DriverClient, shell_hw_code::*};
+    /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     /// let input = vec![1, 2, 3, 4, 5, 6, 7, 8];
@@ -556,7 +556,7 @@ impl DriverClient {
     /// # Examples
     ///
     /// ```rust
-    /// use ingo_fpga::shell::{shell_api::DriverClient, shell_hw_code::*};
+    /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     /// let input = vec![1, 2, 3, 4, 5, 6, 7, 8];
