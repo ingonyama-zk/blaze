@@ -1,5 +1,5 @@
 use crate::msm::RunResults;
-use ingo_fpga::{driver_client::dclient::*, ingo_msm::*};
+use ingo_blaze::{driver_client::dclient::*, ingo_msm::*};
 use num_traits::Pow;
 use std::{
     env,
