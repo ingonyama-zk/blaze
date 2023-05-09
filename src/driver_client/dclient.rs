@@ -525,8 +525,6 @@ impl DriverClient {
                 source: e,
             });
 
-        //.unwrap_or_else(|_| panic!("Failed to get data from label {:?}.", offset));
-        //log::debug!("Getting data of size [ {:?} ] from dma", buffer.len());
         crate::getter_log!(buffer, offset);
     }
 
