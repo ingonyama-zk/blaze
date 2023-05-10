@@ -1,4 +1,4 @@
-use ingo_fpga::{driver_client::dclient::*, ingo_msm::*, utils::*};
+use ingo_blaze::{driver_client::dclient::*, ingo_msm::*, utils::*};
 use num_traits::Pow;
 use std::{
     env,

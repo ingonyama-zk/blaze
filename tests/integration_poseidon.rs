@@ -5,7 +5,7 @@ use std::{
 };
 
 use dotenv::dotenv;
-use ingo_fpga::{
+use ingo_blaze::{
     driver_client::dclient::*,
     ingo_hash::{poseidon_api::{Hash, PoseidonClient, PoseidonInitializeParameters, PoseidonReadResult}, dma_buffer::{DmaBuffer, Align4K}},
     ingo_hash::utils::{num_of_elements_in_base_layer, TreeMode},
