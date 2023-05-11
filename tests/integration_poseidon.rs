@@ -14,7 +14,7 @@ use num::{BigUint, Num};
 
 const ZERO: u32 = 0;
 const ONE: u32 = 1;
-const TREE_HEIGHT_4_NUM_OF_NODES: usize = 585; // todo: remove this
+const TREE_HEIGHT_4_NUM_OF_NODES: usize = 585;
 const TEST_SCALAR: &str =
     "15338226384362629345253584946022322145063321004547266825580649561525819500264";
 
@@ -160,11 +160,7 @@ fn test_build_small_tree_parllel() {
 
         let nof_elements = num_of_elements_in_base_layer(params.tree_height);
 
-        //poseidon.log_api_values();
-
         poseidon.initialize(params);
-
-        //poseidon.log_api_values();
 
         poseidon.loaded_binary_parameters();
 
@@ -198,8 +194,6 @@ fn test_build_small_tree_parllel() {
 
         scope.spawn_fifo(move |_s| {
             assert_eq!((output_buffer.get_mut().as_mut_ptr() as u64) % 4096, 0);
-            // shouldnt panic at unwrap
-            //poseidon.log_api_values();
 
             let result = poseidon
                 .result(Some(PoseidonReadResult {
@@ -252,10 +246,7 @@ fn test_build_tree_1gb() {
         .unwrap()
         .to_bytes_le();
 
-    const BUFFER_SIZE: usize = 999999968; // 1GB MB // 256mb
-                                          //const BUFFER_SIZE: usize = 10 * 1024 * 1024; // 10 MB
-                                          //const DATA_SIZE: usize = 100 * 1024 * 1024; // 100 MB
-                                          //const NUM_CHUNKS: usize = DATA_SIZE / BUFFER_SIZE;
+    const BUFFER_SIZE: usize = 999999968; // 1GB
 
     let mut input_buffer = DmaBuffer::new::<Align4K>(BUFFER_SIZE); // 1 gb
     let mut output_buffer = DmaBuffer::new::<Align4K>(results_size * 64); // 78 gb
@@ -349,9 +340,6 @@ fn test_build_tree_1gb() {
                         % 4096,
                     0
                 );
-
-                // some sanity tests to check alignment - they are commented out for testing need be
-                //assert_eq!((buffer_ptr.get_mut().as_mut_ptr() as u64) % 4096, 0);
 
                 poseidon_c.set_data(buffer_ptr.lock().unwrap().get_mut().as_mut_slice());
 
