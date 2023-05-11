@@ -15,7 +15,7 @@ use num::{BigUint, Num};
 
 const ZERO: u32 = 0;
 const ONE: u32 = 1;
-const TREE_HEIGHT_4_NUM_OF_NODES: usize = 585; // todo: remove this
+const TREE_HEIGHT_4_NUM_OF_NODES: usize = 585;
 const TEST_SCALAR: &str = "15338226384362629345253584946022322145063321004547266825580649561525819500264";
 
 fn get_instruction_path() -> String {
