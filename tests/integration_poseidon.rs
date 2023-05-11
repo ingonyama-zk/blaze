@@ -1,14 +1,13 @@
-use std::{
-    sync::{Arc},
-    thread,
-    time::Duration,
-};
+use std::{sync::Arc, thread, time::Duration};
 
 use dotenv::dotenv;
 use ingo_blaze::{
     driver_client::dclient::*,
-    ingo_hash::{poseidon_api::{Hash, PoseidonClient, PoseidonInitializeParameters, PoseidonReadResult}, dma_buffer::{DmaBuffer, Align4K}},
     ingo_hash::utils::{num_of_elements_in_base_layer, TreeMode},
+    ingo_hash::{
+        dma_buffer::{Align4K, DmaBuffer},
+        poseidon_api::{Hash, PoseidonClient, PoseidonInitializeParameters, PoseidonReadResult},
+    },
 };
 use log::info;
 use num::{BigUint, Num};
@@ -16,7 +15,8 @@ use num::{BigUint, Num};
 const ZERO: u32 = 0;
 const ONE: u32 = 1;
 const TREE_HEIGHT_4_NUM_OF_NODES: usize = 585; // todo: remove this
-const TEST_SCALAR: &str = "15338226384362629345253584946022322145063321004547266825580649561525819500264";
+const TEST_SCALAR: &str =
+    "15338226384362629345253584946022322145063321004547266825580649561525819500264";
 
 fn get_instruction_path() -> String {
     dotenv().ok();
@@ -24,17 +24,19 @@ fn get_instruction_path() -> String {
 }
 
 fn get_input_outputs(tree_size: u32) -> (usize, usize) {
-    let nof_elements = 11 * (u64::pow(8,tree_size));
+    let nof_elements = 11 * (u64::pow(8, tree_size));
 
     let mut nof_results = 0;
     for layer in 0..tree_size + 1 {
-        let results_in_layer = u64::pow(8,tree_size - layer);
+        let results_in_layer = u64::pow(8, tree_size - layer);
         nof_results += results_in_layer;
     }
 
-    (nof_elements.try_into().unwrap(), nof_results.try_into().unwrap())
+    (
+        nof_elements.try_into().unwrap(),
+        nof_results.try_into().unwrap(),
+    )
 }
-
 
 #[test]
 fn test_sanity_check() {
@@ -96,11 +98,13 @@ fn test_build_small_tree() {
         .unwrap()
         .to_bytes_le();
 
-    let input_buf_size: usize = (nof_elements * (scalar.len() * 11) as u32).try_into().unwrap();
+    let input_buf_size: usize = (nof_elements * (scalar.len() * 11) as u32)
+        .try_into()
+        .unwrap();
     let mut input_buffer = DmaBuffer::new::<Align4K>(input_buf_size);
     let mut output_buffer = DmaBuffer::new::<Align4K>(585 * 64);
 
-    for _ in 0.. (585 * 64) {
+    for _ in 0..(585 * 64) {
         output_buffer.get_mut().push(0);
     }
 
@@ -120,8 +124,12 @@ fn test_build_small_tree() {
 
     // shouldnt panic at unwrap
     let result = poseidon
-        .result(Some(PoseidonReadResult { expected_result: TREE_HEIGHT_4_NUM_OF_NODES, result_store_buffer: &mut output_buffer }))
-        .unwrap().unwrap();
+        .result(Some(PoseidonReadResult {
+            expected_result: TREE_HEIGHT_4_NUM_OF_NODES,
+            result_store_buffer: &mut output_buffer,
+        }))
+        .unwrap()
+        .unwrap();
 
     poseidon.log_api_values();
 
@@ -137,7 +145,7 @@ fn test_build_small_tree_parllel() {
         let instruction_path = get_instruction_path();
 
         env_logger::try_init().expect("Invalid logger initialization");
-        
+
         let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
         let poseidon: Arc<PoseidonClient> = Arc::new(PoseidonClient::new(Hash::Poseidon, dclient));
 
@@ -167,7 +175,7 @@ fn test_build_small_tree_parllel() {
         let mut input_buffer = DmaBuffer::new::<Align4K>(input_size * 32);
         let mut output_buffer = DmaBuffer::new::<Align4K>(results_size * 64);
 
-        for _ in 0.. (results_size * 64) {
+        for _ in 0..(results_size * 64) {
             output_buffer.get_mut().push(0);
         }
 
@@ -198,8 +206,8 @@ fn test_build_small_tree_parllel() {
                     expected_result: output_buffer.len() / 64,
                     result_store_buffer: &mut output_buffer,
                 }))
-                .unwrap().unwrap();
-
+                .unwrap()
+                .unwrap();
 
             poseidon.log_api_values();
 
@@ -237,7 +245,6 @@ fn test_build_tree_1gb() {
 
     poseidon.initialize(params);
 
-
     poseidon.loaded_binary_parameters();
 
     // 32 BYTES
@@ -246,9 +253,9 @@ fn test_build_tree_1gb() {
         .to_bytes_le();
 
     const BUFFER_SIZE: usize = 999999968; // 1GB MB // 256mb
-    //const BUFFER_SIZE: usize = 10 * 1024 * 1024; // 10 MB
-    //const DATA_SIZE: usize = 100 * 1024 * 1024; // 100 MB
-    //const NUM_CHUNKS: usize = DATA_SIZE / BUFFER_SIZE;
+                                          //const BUFFER_SIZE: usize = 10 * 1024 * 1024; // 10 MB
+                                          //const DATA_SIZE: usize = 100 * 1024 * 1024; // 100 MB
+                                          //const NUM_CHUNKS: usize = DATA_SIZE / BUFFER_SIZE;
 
     let mut input_buffer = DmaBuffer::new::<Align4K>(BUFFER_SIZE); // 1 gb
     let mut output_buffer = DmaBuffer::new::<Align4K>(results_size * 64); // 78 gb
@@ -263,7 +270,7 @@ fn test_build_tree_1gb() {
 
     assert_eq!(column.len(), 32 * 11);
 
-    for _ in 0.. BUFFER_SIZE / (32 * 11) {
+    for _ in 0..BUFFER_SIZE / (32 * 11) {
         input_buffer.extend_from_slice(column.as_slice());
     }
 
@@ -286,17 +293,23 @@ fn test_build_tree_1gb() {
             poseidon_temp.dclient.enable_hbm_temp_monitoring();
             loop {
                 thread::sleep(Duration::from_millis(250));
-                let (temp_inst, temp_avg, temp_max) = poseidon_temp.dclient.monitor_temperature().unwrap();
-                log::debug!("temp_inst: {} temp_avg: {} temp_max: {}", temp_inst, temp_avg, temp_max);
+                let (temp_inst, temp_avg, temp_max) =
+                    poseidon_temp.dclient.monitor_temperature().unwrap();
+                log::debug!(
+                    "temp_inst: {} temp_avg: {} temp_max: {}",
+                    temp_inst,
+                    temp_avg,
+                    temp_max
+                );
             }
         });
-        
+
         // First thread: Read data from the 100 MB buffer and send buffer pointers
         s.spawn_fifo(move |_| {
             let mut current_buffer = 1;
 
-            let total_num_of_chunks = input_size*32 / BUFFER_SIZE;
-            for chunk in 0..total_num_of_chunks  {
+            let total_num_of_chunks = input_size * 32 / BUFFER_SIZE;
+            for chunk in 0..total_num_of_chunks {
                 let (buffer_to_send, buffer_to_fill) = match current_buffer {
                     1 => (Arc::clone(&buffer1), Arc::clone(&buffer2)),
                     2 => (Arc::clone(&buffer2), Arc::clone(&buffer1)),
@@ -307,11 +320,13 @@ fn test_build_tree_1gb() {
                 tx.send(buffer_to_send).unwrap();
                 {
                     let mut buffer_to_fill = buffer_to_fill.lock().unwrap();
-                    buffer_to_fill.get_mut().copy_from_slice(&input_buffer.get());
+                    buffer_to_fill
+                        .get_mut()
+                        .copy_from_slice(&input_buffer.get());
                 }
 
                 drop(buffer_to_fill); // Unlock the mutex before sending
-                
+
                 current_buffer = if current_buffer == 1 { 2 } else { 1 };
             }
             drop(tx); // Close the channel to signal the end of incoming data
@@ -320,14 +335,26 @@ fn test_build_tree_1gb() {
         // Second thread: Receive and process the buffer pointers
         s.spawn_fifo(move |_| {
             while let Ok(buffer_ptr) = rx.recv() {
-                assert_eq!((buffer_ptr.lock().unwrap().get_mut().as_mut_ptr() as u64) % 4096, 0);
-                assert_eq!((buffer_ptr.lock().unwrap().get_mut().as_mut_slice().as_mut_ptr() as u64) % 4096, 0);
-                
+                assert_eq!(
+                    (buffer_ptr.lock().unwrap().get_mut().as_mut_ptr() as u64) % 4096,
+                    0
+                );
+                assert_eq!(
+                    (buffer_ptr
+                        .lock()
+                        .unwrap()
+                        .get_mut()
+                        .as_mut_slice()
+                        .as_mut_ptr() as u64)
+                        % 4096,
+                    0
+                );
+
                 // some sanity tests to check alignment - they are commented out for testing need be
                 //assert_eq!((buffer_ptr.get_mut().as_mut_ptr() as u64) % 4096, 0);
 
                 poseidon_c.set_data(buffer_ptr.lock().unwrap().get_mut().as_mut_slice());
-    
+
                 poseidon_c.log_api_values();
                 log::debug!("Completed writing all data to FPGA");
             }
@@ -341,8 +368,8 @@ fn test_build_tree_1gb() {
                     expected_result: output_buffer.len() / 64,
                     result_store_buffer: &mut output_buffer,
                 }))
-                .unwrap().unwrap();
-
+                .unwrap()
+                .unwrap();
 
             poseidon.log_api_values();
 

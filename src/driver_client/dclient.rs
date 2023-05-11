@@ -9,7 +9,8 @@
 use crate::{
     driver_client::dclient_code::*,
     error::*,
-    utils::{deserialize_hex, open_channel, AccessFlags}, ingo_hash::dma_buffer::DmaBuffer,
+    ingo_hash::dma_buffer::DmaBuffer,
+    utils::{deserialize_hex, open_channel, AccessFlags},
 };
 use serde::Deserialize;
 use std::{fmt::Debug, os::unix::fs::FileExt, thread::sleep, time::Duration};
@@ -176,12 +177,18 @@ impl DriverClient {
     pub fn monitor_temperature(&self) -> Result<(u32, u32, u32)> {
         let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + 0x028000;
 
-        let temp_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_MAX).unwrap();
-        let temp_avg = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_AVG).unwrap();
-        let temp_inst = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_INST).unwrap();
-            
+        let temp_max = self
+            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_MAX)
+            .unwrap();
+        let temp_avg = self
+            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_AVG)
+            .unwrap();
+        let temp_inst = self
+            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_INST)
+            .unwrap();
+
         Ok((temp_inst, temp_avg, temp_max))
-    } 
+    }
 
     // HBICAP
     /// Checking HBICAP status register. Return `true` if zero (previous operation done) and
@@ -301,7 +308,11 @@ impl DriverClient {
     }
 
     pub fn set_dma_firewall_prescale(&self, pre_scale: i32) -> Result<()> {
-        self.ctrl_write(self.cfg.dma_firewall_baseaddr, 0x230 as u64, &pre_scale.to_le_bytes())?;
+        self.ctrl_write(
+            self.cfg.dma_firewall_baseaddr,
+            0x230 as u64,
+            &pre_scale.to_le_bytes(),
+        )?;
 
         Ok(())
     }
@@ -517,7 +528,7 @@ impl DriverClient {
         offset: T,
         // todo: add optional size
         buffer: &mut DmaBuffer,
-    ) {        
+    ) {
         self.dma_c2h_read
             .read_exact_at(buffer.as_mut_slice(), base_address + offset.into())
             .map_err(|e| DriverClientError::ReadError {

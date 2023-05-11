@@ -80,8 +80,14 @@ impl PoseidonResult {
     }
 }
 
-impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResult>, PoseidonReadResult<'_>>
-    for PoseidonClient
+impl
+    DriverPrimitive<
+        Hash,
+        PoseidonInitializeParameters,
+        &[u8],
+        Vec<PoseidonResult>,
+        PoseidonReadResult<'_>,
+    > for PoseidonClient
 {
     fn new(_ptype: Hash, dclient: DriverClient) -> Self {
         PoseidonClient { dclient }
@@ -123,7 +129,7 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         self.set_merkle_tree_height(param.tree_height)?;
         self.set_tree_start_layer_for_tree(param.tree_mode)?;
         log::debug!("set merkle tree height: {:?}", param.tree_height);
-        
+
         self.dclient.initialize_cms()?;
         self.dclient.set_dma_firewall_prescale(0xFFFF)?;
         Ok(())
@@ -142,13 +148,21 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
 
     fn result(&self, _param: Option<PoseidonReadResult>) -> Result<Option<Vec<PoseidonResult>>> {
         let params = _param.unwrap();
-        
-        self.dclient.dma_read_into(self.dclient.cfg.dma_baseaddr, DMA_RW::OFFSET, params.result_store_buffer);
-        
-        assert_eq!(params.result_store_buffer.len(), params.expected_result * 64);
 
-        let results = PoseidonResult::parse_poseidon_hash_results(params.result_store_buffer.get().to_vec());
-        
+        self.dclient.dma_read_into(
+            self.dclient.cfg.dma_baseaddr,
+            DMA_RW::OFFSET,
+            params.result_store_buffer,
+        );
+
+        assert_eq!(
+            params.result_store_buffer.len(),
+            params.expected_result * 64
+        );
+
+        let results =
+            PoseidonResult::parse_poseidon_hash_results(params.result_store_buffer.get().to_vec());
+
         Ok(Some(results))
     }
 }
