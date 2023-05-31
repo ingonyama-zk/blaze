@@ -62,7 +62,7 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     driver.task_label()?;
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, false);
+        msm::input_generator_bls12_381(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Starting to initialize task and set number of elements: ");
     let msm_params = msm_api::MSMParams {
@@ -121,7 +121,7 @@ fn msm_bls12_377_test() -> Result<(), Box<dyn std::error::Error>> {
     driver.task_label()?;
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_377(msm_size as usize, false);
+        msm::input_generator_bls12_377(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Starting to initialize task and set number of elements: ");
     let msm_params = msm_api::MSMParams {
@@ -161,7 +161,7 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, false);
+        msm::input_generator_bls12_381(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Create Driver API instance");
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
@@ -242,7 +242,7 @@ fn msm_bn254_test() -> Result<(), Box<dyn std::error::Error>> {
     driver.task_label()?;
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bn254(msm_size as usize, false);
+        msm::input_generator_bn254(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Starting to initialize task and set number of elements: ");
     let msm_params = msm_api::MSMParams {
@@ -302,8 +302,10 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) =
-        msm::input_generator_bls12_377(Pow::pow(base, max_exp) as usize, true);
+    let (points, scalars, _, results) = msm::input_generator_bls12_377(
+        Pow::pow(base, max_exp) as usize,
+        msm_api::PRECOMPUTE_FACTOR_BASE,
+    );
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 
@@ -401,7 +403,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start to generate test data");
     let start_gen = Instant::now();
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_377(msm_size as usize, true);
+        msm::input_generator_bls12_377(msm_size as usize, msm_api::PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
 
@@ -485,8 +487,10 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) =
-        msm::input_generator_bls12_381(Pow::pow(base, max_exp) as usize, true);
+    let (points, scalars, _, results) = msm::input_generator_bls12_381(
+        Pow::pow(base, max_exp) as usize,
+        msm_api::PRECOMPUTE_FACTOR,
+    );
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 
@@ -584,7 +588,7 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start to generate test data");
     let start_gen = Instant::now();
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, true);
+        msm::input_generator_bls12_381(msm_size as usize, msm_api::PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
 
