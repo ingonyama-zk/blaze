@@ -304,7 +304,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
     let start_gen = Instant::now();
     let (points, scalars, _, results) = msm::input_generator_bls12_377(
         Pow::pow(base, max_exp) as usize,
-        msm_api::PRECOMPUTE_FACTOR_BASE,
+        msm_api::PRECOMPUTE_FACTOR,
     );
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
@@ -313,10 +313,11 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
     for iter in low_exp..=max_exp {
         let msm_size = Pow::pow(base, iter) as usize;
         log::debug!("MSM size: {}", msm_size);
-        let mut points_to_run = vec![0; msm_size * 8 * 96];
+        let mut points_to_run = vec![0; msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize];
         let mut scalars_to_run = vec![0; msm_size * 32];
 
-        points_to_run.copy_from_slice(&points[0..msm_size * 8 * 96]);
+        points_to_run
+            .copy_from_slice(&points[0..msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize]);
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
@@ -498,10 +499,11 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
     for iter in low_exp..=max_exp {
         let msm_size = Pow::pow(base, iter) as usize;
         log::debug!("MSM size: {}", msm_size);
-        let mut points_to_run = vec![0; msm_size * 8 * 96];
+        let mut points_to_run = vec![0; msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize];
         let mut scalars_to_run = vec![0; msm_size * 32];
 
-        points_to_run.copy_from_slice(&points[0..msm_size * 8 * 96]);
+        points_to_run
+            .copy_from_slice(&points[0..msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize]);
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
