@@ -19,8 +19,10 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) =
-        msm::input_generator_bls12_381(Pow::pow(base, max_exp) as usize, true);
+    let (points, scalars, _, results) = msm::input_generator_bls12_381(
+        Pow::pow(base, max_exp) as usize,
+        msm_api::PRECOMPUTE_FACTOR,
+    );
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 
@@ -126,8 +128,10 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) =
-        msm::input_generator_bls12_377(Pow::pow(base, max_exp) as usize, true);
+    let (points, scalars, _, results) = msm::input_generator_bls12_377(
+        Pow::pow(base, max_exp) as usize,
+        msm_api::PRECOMPUTE_FACTOR,
+    );
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 

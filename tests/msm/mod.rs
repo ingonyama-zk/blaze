@@ -14,13 +14,8 @@ use ark_std::UniformRand;
 use ::std::ops::{Add, Mul};
 use std::{fmt::Display, time::Duration};
 
-const PRECOMPUTE_FACTOR_BLS377: u32 = 8;
 const SCALAR_SIZE_BLS377: u32 = 32;
-
-const PRECOMPUTE_FACTOR_BLS381: u32 = 8;
 const SCALAR_SIZE_BLS381: u32 = 32;
-
-const PRECOMPUTE_FACTOR_BN254: u32 = 8;
 const SCALAR_SIZE_BN254: u32 = 32;
 
 const LARGE_PARAM: usize = 256;
@@ -56,14 +51,17 @@ impl Display for RunResults {
 
 pub fn input_generator_bls12_377(
     nof_elements: usize,
-    precompute: bool,
+    precompute_factor: u32,
 ) -> (
     Vec<u8>,
     Vec<u8>,
     bls377G1Projective,
     Vec<bls377G1Projective>,
 ) {
-    log::info!("Generate bases with precomputation: {}", precompute);
+    log::info!(
+        "Generate bases with precompute factor: {}",
+        precompute_factor
+    );
     log::info!("Starting to generate bases and scalars on BLS12_377 curve...");
     let mut rng = ark_std::rand::thread_rng();
     let mut bases: Vec<u8> = Vec::new();
@@ -82,13 +80,8 @@ pub fn input_generator_bls12_377(
 
     for _ in 0..nof_elems {
         let aff = bls377G1Projective::rand(&mut rng).into_affine();
-        if precompute {
-            let ext = precompute_base_bls12_377(aff);
-            bases.extend(ext);
-        } else {
-            bases.extend(aff.x.into_repr().to_bytes_le());
-            bases.extend(aff.y.into_repr().to_bytes_le());
-        }
+        let ext = precompute_base_bls12_377(aff, precompute_factor);
+        bases.extend(ext);
 
         let scalar = bls377Fr::rand(&mut rng);
         scalars.extend(scalar.into_repr().to_bytes_le());
@@ -119,7 +112,7 @@ pub fn input_generator_bls12_377(
     (bases, scalars, msm_result, results)
 }
 
-pub fn precompute_base_bls12_377(base: bls377G1Affine) -> Vec<u8> {
+pub fn precompute_base_bls12_377(base: bls377G1Affine, precompute_factor: u32) -> Vec<u8> {
     let mut bases = vec![];
     let mut current_point = base;
     let x_bytes = current_point.x.into_repr().to_bytes_le();
@@ -127,7 +120,7 @@ pub fn precompute_base_bls12_377(base: bls377G1Affine) -> Vec<u8> {
     bases.extend_from_slice(&x_bytes);
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
-    for i in 1..PRECOMPUTE_FACTOR_BLS377 {
+    for i in 1..precompute_factor {
         current_point = base;
         let coeff = bls377Fr::from(two.pow(SCALAR_SIZE_BLS377 * i));
         current_point = current_point.mul(coeff).into_affine();
@@ -183,9 +176,12 @@ pub fn result_check_bls12_377(
 
 pub fn input_generator_bn254(
     nof_elements: usize,
-    precompute: bool,
+    precompute_factor: u32,
 ) -> (Vec<u8>, Vec<u8>, bn254G1Projective, Vec<bn254G1Projective>) {
-    log::info!("Generate bases with pre computation: {}", precompute);
+    log::info!(
+        "Generate bases with precompute factor: {}",
+        precompute_factor
+    );
     log::info!("Starting to generate bases and scalars on BN254 curve...");
     let mut rng = ark_std::rand::thread_rng();
     let mut bases: Vec<u8> = Vec::new();
@@ -204,13 +200,8 @@ pub fn input_generator_bn254(
 
     for _ in 0..nof_elems {
         let aff = bn254G1Projective::rand(&mut rng).into_affine();
-        if precompute {
-            let ext = precompute_base_bn254(aff);
-            bases.extend(ext);
-        } else {
-            bases.extend(aff.x.into_repr().to_bytes_le());
-            bases.extend(aff.y.into_repr().to_bytes_le());
-        }
+        let ext = precompute_base_bn254(aff, precompute_factor);
+        bases.extend(ext);
 
         let scalar = bn254Fr::rand(&mut rng);
         scalars.extend(scalar.into_repr().to_bytes_le());
@@ -241,7 +232,7 @@ pub fn input_generator_bn254(
     (bases, scalars, msm_result, results)
 }
 
-pub fn precompute_base_bn254(base: bn254G1Affine) -> Vec<u8> {
+pub fn precompute_base_bn254(base: bn254G1Affine, precompute_factor: u32) -> Vec<u8> {
     let mut bases = vec![];
     let mut current_point = base;
     let x_bytes = current_point.x.into_repr().to_bytes_le();
@@ -249,7 +240,7 @@ pub fn precompute_base_bn254(base: bn254G1Affine) -> Vec<u8> {
     bases.extend_from_slice(&x_bytes);
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
-    for i in 1..PRECOMPUTE_FACTOR_BN254 {
+    for i in 1..precompute_factor {
         current_point = base;
         let coeff = bn254Fr::from(two.pow(SCALAR_SIZE_BN254 * i));
         current_point = current_point.mul(coeff).into_affine();
@@ -305,14 +296,17 @@ pub fn result_check_bn254(
 
 pub fn input_generator_bls12_381(
     nof_elements: usize,
-    precompute: bool,
+    precompute_factor: u32,
 ) -> (
     Vec<u8>,
     Vec<u8>,
     bls381G1Projective,
     Vec<bls381G1Projective>,
 ) {
-    log::info!("Generate bases with precomputation: {}", precompute);
+    log::info!(
+        "Generate bases with precompute factor: {}",
+        precompute_factor
+    );
     log::info!("Starting to generate bases and scalars on BLS12_381 curve...");
     let mut rng = ark_std::rand::thread_rng();
     let mut bases: Vec<u8> = Vec::new();
@@ -331,13 +325,8 @@ pub fn input_generator_bls12_381(
 
     for _ in 0..nof_elems {
         let aff = bls381G1Projective::rand(&mut rng).into_affine();
-        if precompute {
-            let ext = precompute_base_bls12_381(aff);
-            bases.extend(ext);
-        } else {
-            bases.extend(aff.x.into_repr().to_bytes_le());
-            bases.extend(aff.y.into_repr().to_bytes_le());
-        }
+        let ext = precompute_base_bls12_381(aff, precompute_factor);
+        bases.extend(ext);
 
         let scalar = bls381Fr::rand(&mut rng);
         scalars.extend(scalar.into_repr().to_bytes_le());
@@ -368,7 +357,7 @@ pub fn input_generator_bls12_381(
     (bases, scalars, msm_result, results)
 }
 
-pub fn precompute_base_bls12_381(base: bls381G1Affine) -> Vec<u8> {
+pub fn precompute_base_bls12_381(base: bls381G1Affine, precompute_factor: u32) -> Vec<u8> {
     let mut bases = vec![];
     let mut current_point = base;
     let x_bytes = current_point.x.into_repr().to_bytes_le();
@@ -376,7 +365,7 @@ pub fn precompute_base_bls12_381(base: bls381G1Affine) -> Vec<u8> {
     bases.extend_from_slice(&x_bytes);
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
-    for i in 1..PRECOMPUTE_FACTOR_BLS381 {
+    for i in 1..precompute_factor {
         current_point = base;
         let coeff = bls381Fr::from(two.pow(SCALAR_SIZE_BLS381 * i));
         current_point = current_point.mul(coeff).into_affine();
