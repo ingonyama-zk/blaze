@@ -117,6 +117,10 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         Ok(())
     }
 
+    fn start_process(&self) -> Result<()> {
+        todo!()
+    }
+
     fn set_data(&self, input: &[u8]) -> Result<()> {
         self.dclient
             .dma_write(self.dclient.cfg.dma_baseaddr, DMA_RW::OFFSET, input)?;

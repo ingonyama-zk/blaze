@@ -9,4 +9,5 @@ pub mod driver_client;
 pub mod error;
 pub mod ingo_hash;
 pub mod ingo_msm;
+pub mod ingo_ntt;
 pub mod utils;

@@ -38,6 +38,8 @@ pub trait DriverPrimitive<T, P, I, O> {
     fn initialize(&self, param: P) -> Result<()>;
     /// The `set_data` method sets the input data for the driver primitive.
     fn set_data(&self, input: I) -> Result<()>;
+    /// The `start_process` method starts the driver after setting all controls and data.
+    fn start_process(&self) -> Result<()>;
     /// The `wait_result` method waits for the driver primitive to finish processing the input data.
     fn wait_result(&self) -> Result<()>;
     /// The `result` method returns the output data from the driver primitive,

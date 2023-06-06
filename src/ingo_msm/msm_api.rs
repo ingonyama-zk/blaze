@@ -114,14 +114,16 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
             params.nof_elements,
         )?;
 
+        Ok(())
+    }
+
+    fn start_process(&self) -> Result<()> {
         log::info!("Pushing Task Signal");
         self.driver_client.ctrl_write_u32(
             self.driver_client.cfg.ctrl_baseaddr,
             INGO_MSM_ADDR::ADDR_CPU2HIF_E_PUSH_MSM_TASK_TO_QUEUE,
             1,
-        )?;
-
-        Ok(())
+        )
     }
 
     /// This function sets data for compute MSM and has three different cases depending on the input parameters.
