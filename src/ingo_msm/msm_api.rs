@@ -210,7 +210,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         // Scalar addres can be loaded from configuration file or setup by user in input parametrs
         let s_addr = self.msm_cfg.dma_scalars_addr.unwrap();
 
-        if data.points.is_none() && data.params.hbm_point_addr.is_none() {
+        if data.points.is_none() && data.params.hbm_point_addr.is_some() {
             log::debug!("Set only scalars");
             for i in 0..chunks {
                 let (s_start, s_end) = if i != chunks - 1 {
