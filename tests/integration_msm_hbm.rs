@@ -160,12 +160,12 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         // log::debug!("writing data to HBM");
         let hbm_addr: u64 = 0x0;
         let offset: u64 = 0x0;
-        // let points_to_hbm = points_to_run.clone();
-        // driver.load_data_to_hbm(&points_to_hbm, hbm_addr, offset)?;
-        // let comp_points = driver.get_data_from_hbm(&points, hbm_addr, offset);
-        // assert_eq!(points_to_hbm, comp_points.unwrap());
-        // log::debug!("HBM Test OK");
-        // driver.load_data_to_hbm(&points_to_hbm, hbm_addr, offset)?;
+        let points_to_hbm = points_to_run.clone();
+        driver.load_data_to_hbm(&points_to_hbm, hbm_addr, offset)?;
+        let comp_points = driver.get_data_from_hbm(&points, hbm_addr, offset);
+        assert_eq!(points_to_hbm, comp_points.unwrap());
+        log::debug!("HBM Test OK");
+        driver.load_data_to_hbm(&points_to_hbm, hbm_addr, offset)?;
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;

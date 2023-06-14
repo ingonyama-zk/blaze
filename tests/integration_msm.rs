@@ -332,6 +332,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         );
         driver.reset()?;
 
+        let start_full = Instant::now();
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
         driver.task_label()?;
@@ -349,7 +350,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         log::info!("Starting to calculate MSM: ");
         log::debug!("Timer start");
         let start_set_data = Instant::now();
-        let start_full = Instant::now();
+
         let _ = driver.set_data(msm_api::MSMInput {
             points: Some(points_to_run),
             scalars: scalars_to_run,

@@ -38,3 +38,7 @@ serde-hex = "0.1.0"
 thiserror = "1.0"
 num-bigint = "0.4"
 num-traits = "0.2.15"
+
+[[bench]]
+name = "msm_bench"
+harness = false

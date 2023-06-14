@@ -251,6 +251,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
                     .dma_write(p_addr, DMA_RW::OFFSET, p_chunk)?;
             }
         } else if data.points.is_some() && data.params.hbm_point_addr.is_some() {
+            log::debug!("Load points into hbm");
             let hbm_addr = data.params.hbm_point_addr.unwrap();
             self.load_data_to_hbm(data.points.as_ref().unwrap(), hbm_addr.0, hbm_addr.1)?;
 
