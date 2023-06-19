@@ -1,0 +1,7 @@
+message: If you use blaze, please cite it as below."
+ authors:
+ - family-names: "Ingonyama"
+ title: "blaze is a Rust library for ZK acceleration on Xilinx FPGAs."
+ version: 0.3.0
+ date-released: 2023-05-05
+ url: "https://ingonyama-zk.github.io/blaze/"
