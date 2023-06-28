@@ -1,8 +1,7 @@
 # BLAZE
  <div align="center">blaze is a Rust library for ZK acceleration on Xilinx FPGAs.</div>
 
- ![Ingo_BlazeFire_1a](https://user-images.githubusercontent.com/2446179/236798848-b5a49f75-1914-4565-8780-22165b960513.png)
-
+![ingo_BlazeFire_5d](https://github.com/ingonyama-zk/blaze/assets/2446179/6460173b-02af-4023-b055-c8274a0cbc21)
 
 **Disclaimer:** This release is aimed at extending the design and handling of HW, this design isn’t backward compatible with previous and F1 support is currently broken, will be fixed in short time.
 

@@ -52,7 +52,8 @@ impl MSMConfig {
 
 pub struct MSMClient {
     mem_type: PointMemoryType,
-    is_precompute: bool,
+    // If precompute factor set to 1 is the basic MSM computation without optimization
+    precompute_factor: u32,
     msm_cfg: MSMConfig,
     pub driver_client: DriverClient,
 }
@@ -80,12 +81,19 @@ pub struct MSMResult {
     pub result_label: u32,
 }
 
+pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
+pub const PRECOMPUTE_FACTOR: u32 = 8;
+
 impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult, usize> for MSMClient {
     /// Creates a new [`MSMClient`].
     fn new(init: MSMInit, dclient: DriverClient) -> Self {
         MSMClient {
             mem_type: init.mem_type,
-            is_precompute: init.is_precompute,
+            precompute_factor: if init.is_precompute {
+                PRECOMPUTE_FACTOR
+            } else {
+                PRECOMPUTE_FACTOR_BASE
+            },
             msm_cfg: MSMConfig::load_cfg(init.curve, init.mem_type),
             driver_client: dclient,
         }
@@ -202,7 +210,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult, usize> for MSMClie
         // Scalar addres can be loaded from configuration file or setup by user in input parametrs
         let s_addr = self.msm_cfg.dma_scalars_addr.unwrap();
 
-        if data.points.is_none() && data.params.hbm_point_addr.is_none() {
+        if data.points.is_none() && data.params.hbm_point_addr.is_some() {
             log::debug!("Set only scalars");
             for i in 0..chunks {
                 let (s_start, s_end) = if i != chunks - 1 {
@@ -217,9 +225,8 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult, usize> for MSMClie
         } else if data.points.is_some() && data.params.hbm_point_addr.is_none() {
             log::debug!("Set points and scalars");
             let mut payload_size_points = CHUNK_SIZE * self.msm_cfg.point_size.unwrap();
-            if self.is_precompute {
-                payload_size_points *= 8;
-            }
+            payload_size_points *= self.precompute_factor as usize;
+
             let p_addr = self.msm_cfg.dma_points_addr.unwrap();
             let p = data.points.as_ref().unwrap();
 
