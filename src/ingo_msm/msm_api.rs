@@ -1,54 +1,9 @@
-use crate::{
-    driver_client::dclient::*, driver_client::dclient_code::*, error::*, ingo_msm::msm_hw_code::*,
-    utils::deserialize_option_hex,
-};
+use super::{msm_cfg::*, msm_hw_code::*};
+use crate::{driver_client::*, error::*};
 
 use packed_struct::prelude::*;
-use serde::Deserialize;
 use std::{os::unix::fs::FileExt, thread::sleep, time::Duration};
-
 use strum::IntoEnumIterator;
-use strum_macros::EnumString;
-
-#[derive(Debug, EnumString, PartialEq)]
-pub enum Curve {
-    BLS377,
-    BLS381,
-    BN254,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, EnumString)]
-pub enum PointMemoryType {
-    HBM,
-    DMA,
-}
-
-#[derive(Deserialize, Debug, Copy, Clone)]
-struct MSMConfig {
-    // The size characteristic in points and scalars in a curve.
-    /// The size in bytes of result point. The point is expected to be in projective form.
-    result_point_size: usize,
-    /// The size of one point in bytes. Point is represented in affine form.
-    point_size: Option<usize>,
-    /// The size of scalar coordinate in bytes.
-    scalar_size: usize,
-
-    // Ingo MSM Core additional addresses
-    #[serde(default, deserialize_with = "deserialize_option_hex")]
-    dma_scalars_addr: Option<u64>,
-    #[serde(default, deserialize_with = "deserialize_option_hex")]
-    dma_points_addr: Option<u64>,
-}
-
-impl MSMConfig {
-    fn load_cfg(curve: Curve, mem: PointMemoryType) -> Self {
-        let name = format!("configs/msm_{:?}_{:?}_cfg.json", curve, mem).to_ascii_lowercase();
-        log::info!("Config name: {}", name);
-        let file = std::fs::File::open(name).expect("");
-        let reader = std::io::BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
-    }
-}
 
 pub struct MSMClient {
     mem_type: PointMemoryType,
@@ -94,7 +49,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
             } else {
                 PRECOMPUTE_FACTOR_BASE
             },
-            msm_cfg: MSMConfig::load_cfg(init.curve, init.mem_type),
+            msm_cfg: MSMConfig::msm_cfg(init.curve, init.mem_type),
             driver_client: dclient,
         }
     }

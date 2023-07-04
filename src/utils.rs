@@ -1,5 +1,4 @@
 use anyhow;
-use serde::{de, Deserialize};
 use std::{
     fs::{File, OpenOptions},
     io::{Error, Read},
@@ -128,23 +127,6 @@ pub fn convert_to_32_byte_array(init: &[u8]) -> [u8; 32] {
     arr[..init.len()].copy_from_slice(init);
 
     arr
-}
-
-pub fn deserialize_hex<'de, D: serde::Deserializer<'de>>(d: D) -> Result<u64, D::Error> {
-    let hex: String = Deserialize::deserialize(d)?;
-    u64::from_str_radix(hex.trim_start_matches("0x"), 16).map_err(de::Error::custom)
-}
-
-pub fn deserialize_option_hex<'de, D: serde::Deserializer<'de>>(
-    d: D,
-) -> Result<Option<u64>, D::Error> {
-    let hex: Option<String> = Option::deserialize(d)?;
-    if let Some(hex) = hex {
-        return Ok(Some(
-            u64::from_str_radix(hex.trim_start_matches("0x"), 16).map_err(de::Error::custom)?,
-        ));
-    }
-    Ok(None)
 }
 
 // ==== general ====

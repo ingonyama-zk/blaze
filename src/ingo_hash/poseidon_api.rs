@@ -3,8 +3,8 @@ use std::{option::Option, thread::sleep, time::Duration};
 use strum::IntoEnumIterator;
 
 use crate::{
-    driver_client::dclient::*, driver_client::dclient_code::*, error::*,
-    ingo_hash::hash_hw_code::*, ingo_hash::utils::*, utils::convert_to_32_byte_array,
+    driver_client::*, error::*, ingo_hash::hash_hw_code::*, ingo_hash::utils::*,
+    utils::convert_to_32_byte_array,
 };
 
 use csv;
@@ -297,7 +297,7 @@ mod tests {
 
         info!("Create Driver API instance");
 
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
         let driver: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
         let params = driver.loaded_binary_parameters();
         info!("Driver parameters: [{:?}, {:032b}]", params[0], params[1]);
