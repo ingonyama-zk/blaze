@@ -46,9 +46,7 @@ fn msm_bls377_hbm_cfg() -> MSMConfig {
         result_point_size: 144,
         point_size: Some(96),
         scalar_size: 32,
-        dma_scalars_addr: Some(
-            u64::from_str_radix("0x0000020000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
+        dma_scalars_addr: Some(0x0000020000000000),
         dma_points_addr: None,
     }
 }
@@ -58,12 +56,8 @@ fn msm_bls377_dma_cfg() -> MSMConfig {
         result_point_size: 144,
         point_size: Some(96),
         scalar_size: 32,
-        dma_scalars_addr: Some(
-            u64::from_str_radix("0x0000020000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
-        dma_points_addr: Some(
-            u64::from_str_radix("0x0000010000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
+        dma_scalars_addr: Some(0x0000020000000000),
+        dma_points_addr: Some(0x0000010000000000),
     }
 }
 
@@ -72,9 +66,7 @@ fn msm_bls381_hbm_cfg() -> MSMConfig {
         result_point_size: 144,
         point_size: Some(96),
         scalar_size: 32,
-        dma_scalars_addr: Some(
-            u64::from_str_radix("0x0000020000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
+        dma_scalars_addr: Some(0x0000020000000000),
         dma_points_addr: None,
     }
 }
@@ -84,12 +76,8 @@ fn msm_bls381_dma_cfg() -> MSMConfig {
         result_point_size: 144,
         point_size: Some(96),
         scalar_size: 32,
-        dma_scalars_addr: Some(
-            u64::from_str_radix("0x0000020000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
-        dma_points_addr: Some(
-            u64::from_str_radix("0x0000010000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
+        dma_scalars_addr: Some(0x0000020000000000),
+        dma_points_addr: Some(0x0000010000000000),
     }
 }
 
@@ -98,11 +86,7 @@ fn msm_bn254_dma_cfg() -> MSMConfig {
         result_point_size: 96,
         point_size: Some(64),
         scalar_size: 32,
-        dma_scalars_addr: Some(
-            u64::from_str_radix("0x0000010000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
-        dma_points_addr: Some(
-            u64::from_str_radix("0x0000000000000000".trim_start_matches("0x"), 16).unwrap(),
-        ),
+        dma_scalars_addr: Some(0x0000010000000000),
+        dma_points_addr: Some(0x0000000000000000),
     }
 }

@@ -33,20 +33,15 @@ impl DriverConfig {
 
 fn c1100_cfg() -> DriverConfig {
     DriverConfig {
-        ctrl_baseaddr: u64::from_str_radix("0x00000000".trim_start_matches("0x"), 16).unwrap(),
-        ctrl_cms_baseaddr: u64::from_str_radix("0x04000000".trim_start_matches("0x"), 16).unwrap(),
-        // ctrl_qspi_baseaddr: u64::from_str_radix("0x04040000".trim_start_matches("0x"), 16).unwrap(),
-        ctrl_hbicap_baseaddr: u64::from_str_radix("0x04050000".trim_start_matches("0x"), 16)
-            .unwrap(),
-        // ctrl_mgmt_ram_baseaddr: u64::from_str_radix("0x04060000".trim_start_matches("0x"), 16).unwrap(),
-        ctrl_firewall_baseaddr: u64::from_str_radix("0x04070000".trim_start_matches("0x"), 16)
-            .unwrap(),
-        dma_firewall_baseaddr: u64::from_str_radix("0x04080000".trim_start_matches("0x"), 16)
-            .unwrap(),
-        ctrl_dfx_decoupler_baseaddr: u64::from_str_radix("0x04090000".trim_start_matches("0x"), 16)
-            .unwrap(),
-        dma_baseaddr: u64::from_str_radix("0x0000000000000000".trim_start_matches("0x"), 16)
-            .unwrap(),
-        // dma_hbicap_baseaddr: u64::from_str_radix("0x1000000000000000".trim_start_matches("0x"), 16).unwrap(),
+        ctrl_baseaddr: 0x00000000,
+        ctrl_cms_baseaddr: 0x04000000,
+        // ctrl_qspi_baseaddr: 0x04040000,
+        ctrl_hbicap_baseaddr: 0x04050000,
+        // ctrl_mgmt_ram_baseaddr: 0x04060000,
+        ctrl_firewall_baseaddr: 0x04070000,
+        dma_firewall_baseaddr: 0x04080000,
+        ctrl_dfx_decoupler_baseaddr: 0x04090000,
+        dma_baseaddr: 0x0000000000000000,
+        // dma_hbicap_baseaddr: 0x1000000000000000,
     }
 }
