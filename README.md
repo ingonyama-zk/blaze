@@ -22,16 +22,17 @@ On the connection side, we can provide an API to retrieve any necessary data (in
 
 ### DriverClient
 
-The [DriverClient](src/driver_client/) module is designed to establish a connection between the FPGA/AWS and a known type of card, such as the C1100 card. It does not possess any knowledge about primitives.
+The [DriverClient](src/driver_client/) module is designed to establish a connection between the FPGA/AWS and a known type of card, such as the U250 card. It does not possess any knowledge about primitives.
 
-The [DriverClient](src/driver_client/) provides basic IO methods and can load a binary, as well as provide specific and debug information about current HW. For a specific card type, the [DriverConfig](src/driver_client/dclient.rs) remains the same and can be accessed using the `driver_client_c1100_cfg` function.
+The [DriverClient](src/driver_client/) provides basic IO methods and can load a binary, as well as provide specific and debug information about current HW. For a specific card type, the [DriverConfig](src/driver_client/dclient.rs) remains the same and can be accessed using the `driver_client_u250_cfg` function.
 
 It is important to note that the high-level management layer determines which client and primitive should be used. The [DriverClient](src/driver_client/) can be overused in this process.
 
 How to create a new connection:
 
 ```rust
-let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+let dclient = DriverClient::new(&id, 
+DriverConfig::driver_client_cfg(CardType::U250));
 ```
 
 ### DriverPrimitive
@@ -43,7 +44,7 @@ The configuration (e.g. for msm there are addresses space and curve description)
 To create a new primitive instance for MSM, for example, one would use the following code:
 
 ```rust
-let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
 let driver = msm_api::MSMClient::new(
  msm_api::MSMInit {
  mem_type: msm_api::PointMemoryType::DMA,
@@ -63,7 +64,7 @@ For data encapsulation, methods specific to each primitive can be divided into p
 We will refer to any type of primitive as `DriverPrimitiveClient` to show generality. And any abbreviation for a specific primitive will be replaced by `dpc` (e.g. `dpc_api` can be `msm_api` )
 
 ```rust
- let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+ let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
  let driver = dpc_api:: DriverPrimitiveClient::new(dpc_api::dpc_type, dclient);
 
  let params = driver.get_loaded_binary_parameters();

@@ -24,7 +24,7 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     log::info!("MSM Size: {}", msm_size);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,
@@ -99,7 +99,7 @@ fn msm_bls12_377_test() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,
@@ -156,7 +156,7 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
         msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,
@@ -212,7 +212,7 @@ fn msm_bn254_test() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,
@@ -302,7 +302,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
         let driver = MSMClient::new(
             MSMInit {
                 mem_type: PointMemoryType::DMA,
@@ -390,7 +390,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,
@@ -485,7 +485,7 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
         let driver = MSMClient::new(
             MSMInit {
                 mem_type: PointMemoryType::DMA,
@@ -573,7 +573,7 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,

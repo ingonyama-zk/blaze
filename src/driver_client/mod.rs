@@ -1,6 +1,6 @@
-pub mod dclient;
-pub mod dclient_cfg;
-pub(crate) mod dclient_code;
+mod dclient;
+mod dclient_cfg;
+mod dclient_code;
 
 pub use dclient::*;
 pub use dclient_cfg::{CardType, DriverConfig};
