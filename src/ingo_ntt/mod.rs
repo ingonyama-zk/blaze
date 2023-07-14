@@ -1,3 +1,5 @@
-pub mod ntt_api;
-pub mod ntt_hw_code;
-pub mod ntt_utils;
+mod ntt_api;
+mod ntt_cfg;
+mod ntt_hw_code;
+
+pub use ntt_api::*;

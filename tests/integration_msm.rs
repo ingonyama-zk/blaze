@@ -71,7 +71,7 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     driver.initialize(msm_params)?;
-    driver.start_process()?;
+    driver.start_process(None)?;
 
     log::info!("Starting to calculate MSM: ");
     driver.set_data(msm_api::MSMInput {
@@ -128,7 +128,7 @@ fn msm_bls12_377_test() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     driver.initialize(msm_params)?;
-    driver.start_process()?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
     driver.set_data(msm_api::MSMInput {
         points: Some(points),
@@ -184,7 +184,7 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     driver.initialize(msm_params)?;
-    driver.start_process()?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
     driver.set_data(msm_api::MSMInput {
         points: Some(points),
@@ -243,7 +243,7 @@ fn msm_bn254_test() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     driver.initialize(msm_params)?;
-    driver.start_process()?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
     driver.set_data(msm_api::MSMInput {
         points: Some(points),
@@ -329,7 +329,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             hbm_point_addr: None,
         };
         driver.initialize(msm_params)?;
-        driver.start_process()?;
+        driver.start_process(None)?;
 
         driver.driver_client.firewalls_status();
 
@@ -421,7 +421,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         hbm_point_addr: None,
     };
     driver.initialize(msm_params)?;
-    driver.start_process()?;
+    driver.start_process(None)?;
 
     driver.driver_client.firewalls_status();
     driver.task_label()?;
@@ -514,7 +514,7 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             hbm_point_addr: None,
         };
         driver.initialize(msm_params)?;
-        driver.start_process()?;
+        driver.start_process(None)?;
 
         driver.driver_client.firewalls_status();
 
@@ -606,7 +606,7 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         hbm_point_addr: None,
     };
     driver.initialize(msm_params)?;
-    driver.start_process()?;
+    driver.start_process(None)?;
 
     driver.driver_client.firewalls_status();
     driver.task_label()?;

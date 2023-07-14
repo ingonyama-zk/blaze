@@ -117,7 +117,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         Ok(())
     }
 
-    fn start_process(&self) -> Result<()> {
+    fn start_process(&self, param: Option<usize>) -> Result<()> {
         log::info!("Pushing Task Signal");
         self.driver_client.ctrl_write_u32(
             self.driver_client.cfg.ctrl_baseaddr,
@@ -319,12 +319,13 @@ impl MSMClient {
         Ok(())
     }
 
-    pub fn get_data_from_hbm(&self, data: &[u8], addr: u64, offset: u64) -> Result<Vec<u8>> {
+    pub fn get_data_from_hbm(&self, data_len: usize, addr: u64, offset: u64) -> Result<Vec<u8>> {
         log::debug!("HBM adress: {:#X?}", addr);
-        log::debug!("Data length: {:#X?}", data.len());
-        let res = self.driver_client.dma_read(addr, offset, data.len());
+        log::debug!("Data length: {:#X?}", data_len);
+        let mut res = vec![0; data_len];
+        self.driver_client.dma_read(addr, offset, &mut res)?;
         log::debug!("Successfully read data from hbm");
-        res
+        Ok(res)
     }
 
     pub fn get_api(&self) {

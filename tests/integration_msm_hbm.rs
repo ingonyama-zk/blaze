@@ -67,7 +67,7 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         driver.initialize(msm_params)?;
-        driver.start_process()?;
+        driver.start_process(None)?;
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to calculate MSM: ");
@@ -176,7 +176,7 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         driver.initialize(msm_params)?;
-        driver.start_process()?;
+        driver.start_process(None)?;
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to calculate MSM: ");

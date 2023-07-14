@@ -39,12 +39,12 @@ pub trait DriverPrimitive<T, P, I, O> {
     /// The `set_data` method sets the input data for the driver primitive.
     fn set_data(&self, input: I) -> Result<()>;
     /// The `start_process` method starts the driver after setting all controls and data.
-    fn start_process(&self) -> Result<()>;
+    fn start_process(&self, param: Option<usize>) -> Result<()>;
     /// The `wait_result` method waits for the driver primitive to finish processing the input data.
     fn wait_result(&self) -> Result<()>;
     /// The `result` method returns the output data from the driver primitive,
     ///  optionally with a specific parameter. If there is no output data available, it returns `None`.
-    fn result(&self, _param: Option<usize>) -> Result<Option<O>>;
+    fn result(&self, param: Option<usize>) -> Result<Option<O>>;
 }
 
 /// The [`DriverClient`] is described bunch of addreses on FPGA which called [`DriverConfig`] also
@@ -130,6 +130,19 @@ impl DriverClient {
             self.cfg.ctrl_cms_baseaddr + 0x028000,
             CMS_ADDR::ADDR_HIF2CPU_CMS_CONTROL_REG,
             ctrl_reg.unwrap() | 1 << 27,
+        )?;
+        Ok(())
+    }
+
+    pub fn reset_sensor_data(&self) -> Result<()> {
+        let ctrl_reg = self.ctrl_read_u32(
+            self.cfg.ctrl_cms_baseaddr + 0x028000,
+            CMS_ADDR::ADDR_HIF2CPU_CMS_CONTROL_REG,
+        );
+        self.ctrl_write_u32(
+            self.cfg.ctrl_cms_baseaddr + 0x028000,
+            CMS_ADDR::ADDR_HIF2CPU_CMS_CONTROL_REG,
+            ctrl_reg.unwrap() | 1,
         )?;
         Ok(())
     }
@@ -419,7 +432,7 @@ impl DriverClient {
     ///
     /// * `base_address`: the base address in the DMA bus addresses space
     /// * `offset`: an enum which represent the specific offset for given `base_address`.
-    /// * `size`: an unsigned integer representing the size of the data to be read.
+    /// * `read_buffer`: existing mememory for reading data
     ///
     /// returns: Vec<u8>
     ///
@@ -441,19 +454,17 @@ impl DriverClient {
         &self,
         base_address: u64,
         offset: T,
-        size: usize,
-    ) -> Result<Vec<u8>> {
-        let mut read_data = vec![0; size];
-
+        read_buffer: &mut Vec<u8>,
+    ) -> Result<()> {
         self.dma_c2h_read
-            .read_exact_at(&mut read_data, base_address + offset.into())
+            .read_exact_at(read_buffer, base_address + offset.into())
             .map_err(|e| DriverClientError::ReadError {
                 offset: format!("{:?}", offset),
                 source: e,
             })?;
 
-        crate::getter_log!(read_data, offset);
-        Ok(read_data)
+        crate::getter_log!(read_buffer, offset);
+        Ok(())
     }
 
     /// The method for writing data from host memory into FPGA.

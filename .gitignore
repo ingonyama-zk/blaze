@@ -13,3 +13,4 @@ Cargo.lock
 *DS_Store*
 *.csv
 .env
+test_data
