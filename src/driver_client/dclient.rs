@@ -6,12 +6,11 @@
 //! for custom modules. Each custom module is built on top of this foundation and
 //! includes its own specific fields and methods.
 //!
+use super::{dclient_cfg::*, dclient_code::*};
 use crate::{
-    driver_client::dclient_code::*,
     error::*,
-    utils::{deserialize_hex, open_channel, AccessFlags},
+    utils::{open_channel, AccessFlags},
 };
-use serde::Deserialize;
 use std::{fmt::Debug, os::unix::fs::FileExt, thread::sleep, time::Duration};
 
 /// A trait for defining functions related to parameters of specific core image.
@@ -46,51 +45,11 @@ pub trait DriverPrimitive<T, P, I, O> {
     fn result(&self, _param: Option<usize>) -> Result<Option<O>>;
 }
 
-/// The [`DriverConfig`] is a struct that defines a set of 64-bit unsigned integer (`u64`)
-/// representing addreses memory space for different components of a FPGA.
-///
-/// The struct is divided into logical parts: AXI Lite space of addresses and AXI space of addresses
-#[derive(Copy, Clone, Deserialize, Debug)]
-pub struct DriverConfig {
-    // CTRL
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub ctrl_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub ctrl_cms_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub ctrl_qspi_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub ctrl_hbicap_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub ctrl_mgmt_ram_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub ctrl_firewall_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub dma_firewall_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub ctrl_dfx_decoupler_baseaddr: u64,
-
-    // DMA
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub dma_baseaddr: u64,
-    #[serde(deserialize_with = "deserialize_hex")]
-    pub dma_hbicap_baseaddr: u64,
-}
-
-impl DriverConfig {
-    /// Create a new driver config from the given configuration in json format.
-    pub fn driver_client_c1100_cfg() -> Self {
-        let file = std::fs::File::open("configs/c1100_cfg.json").expect("");
-        let reader = std::io::BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
-    }
-}
-
 /// The [`DriverClient`] is described bunch of addreses on FPGA which called [`DriverConfig`] also
 /// it includes file descriptor for read-from and write-to channels using DMA bus and CTRL bus.
 pub struct DriverClient {
     /// Addreses space of current FPGA.
-    pub cfg: DriverConfig,
+    pub(crate) cfg: DriverConfig,
     /// Write only channel from host memory into custom core using DMA bus.
     pub dma_h2c_write: std::fs::File,
     /// Read only channel from core using DMA bus.
@@ -115,7 +74,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::shell_api::{DriverClient, DriverConfig};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     /// ```
     pub fn new(id: &str, cfg: DriverConfig) -> Self {
         DriverClient {
@@ -225,7 +184,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     ///
     /// // read binary data from given filename
     /// let buf = utils::read_binary_file(&filename);
@@ -275,7 +234,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::shell_api::DriverClient;
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverConfig::driver_client_cfg(CardType::U250);
     /// dclient.set_firewall_block(dclient.cfg.ctrl_firewall_baseaddr, true); // ctrl firewall is now blocked
     /// dclient.set_firewall_block(dclient.cfg.dma_firewall_baseaddr, false); // dma firewall is now unblocked
     /// ```
@@ -316,7 +275,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     ///
     /// let ret = dclient.ctrl_read_u32(
     ///     dclient.cfg.ctrl_firewall_baseaddr,
@@ -390,7 +349,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     ///    
     /// dclient.ctrl_write_u32(
     ///     dclient.cfg.ctrl_hbicap_baseaddr,
@@ -467,7 +426,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     /// let size_of_input = 16;
     /// let readen = dclient.dma_read(
     ///     dclient.cfg.dma_baseaddr,
@@ -512,7 +471,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     /// let input = vec![1, 2, 3, 4, 5, 6, 7, 8];
     /// let chunk_size = 4;
     ///
@@ -558,7 +517,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     /// let input = vec![1, 2, 3, 4, 5, 6, 7, 8];
     /// let chunk_size = 4;
     ///
