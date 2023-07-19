@@ -74,7 +74,7 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        driver.set_data(msm_api::MSMInput {
+        driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
             params: msm_params,
@@ -183,7 +183,7 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        driver.set_data(msm_api::MSMInput {
+        driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
             params: msm_params,

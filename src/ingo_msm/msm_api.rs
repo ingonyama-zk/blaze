@@ -117,7 +117,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         Ok(())
     }
 
-    fn start_process(&self, param: Option<usize>) -> Result<()> {
+    fn start_process(&self, _param: Option<usize>) -> Result<()> {
         log::info!("Pushing Task Signal");
         self.driver_client.ctrl_write_u32(
             self.driver_client.cfg.ctrl_baseaddr,

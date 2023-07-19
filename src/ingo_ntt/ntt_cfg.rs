@@ -1,9 +1,4 @@
-use num_bigint::BigInt;
-use std::{
-    env,
-    fs::{read_to_string, File},
-    io::{BufReader, Read},
-};
+use std::{fs::File, io::Read};
 
 pub(super) const NOF_BANKS: usize = 16;
 
@@ -69,92 +64,59 @@ pub(super) struct NTTBanks {
 }
 
 impl NTTBanks {
-    const NTT_WORD_SIZE: u32 = 32;
+    const NTT_WORD_SIZE: usize = 32;
+    const NTT_NOF_MMU_IN_CORE: usize = 8;
 
-    pub(super) fn preprocess(input: Vec<u8>, fname: String) -> Self {
+    const NTT_NOF_GROUPS: usize = 512;
+    const NTT_NOF_SLICE: usize = 2;
+    const NTT_NOF_BATCH: usize = 16;
+    const NTT_NOF_SUBNTT: usize = 8;
+    const NTT_NOF_ROW: usize = 64;
+
+    pub(super) fn preprocess(input: Vec<u8>) -> Self {
         let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
         for _ in 0..NOF_BANKS {
             banks.push(Default::default());
         }
-        // for line in read_to_string(fname).unwrap().lines() {
-            
-        // }
-        // let mut lines = read_to_string(fname).unwrap().lines() ;
-        // for group in 0..512 {
-        //     for slice in 0..2 {
-        //         for batch in 0..16 {
-        //             for subntt in 0..8 {
-        //                 for cores in [[0usize..8], [8..16]] {
-        //                     for row in 0..64 {
-        //                         for bank_num in cores.clone().into_iter() {
-        //                             let element = BigInt::parse_bytes(lines.next().unwrap().as_bytes(), 10)
-        //                                 .unwrap()
-        //                                 .to_bytes_le()
-        //                                 .1;
-        //                             banks[bank_num][0].extend(element);
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     println!("Group {} is ready", group)
-        // }
-        // BigInt::parse_bytes(n, 10).unwrap().to_bytes_le().1
+        let mut addr = 0;
+        for group in 0..Self::NTT_NOF_GROUPS {
+            for _ in 0..Self::NTT_NOF_SLICE {
+                for _ in 0..Self::NTT_NOF_BATCH {
+                    for _ in 0..Self::NTT_NOF_SUBNTT {
+                        for cores in [[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]] {
+                            for row in 0..Self::NTT_NOF_ROW {
+                                for bank_num in cores.into_iter() {
+                                    let buf: &[u8] = &input[(bank_num % 8 + row * 8) * 32 + addr
+                                        ..(bank_num % 8 + row * 8 + 1) * 32 + addr];
+                                    banks[bank_num].extend_from_slice(buf);
+                                }
+                            }
+                            addr +=
+                                Self::NTT_NOF_MMU_IN_CORE * Self::NTT_NOF_ROW * Self::NTT_WORD_SIZE;
+                        }
+                    }
+                }
+            }
+            log::debug!("Group {} is ready", group)
+        }
 
         NTTBanks {
-            banks: already_preprocess().try_into().unwrap(),
+            banks: banks.try_into().unwrap(),
         }
     }
 
     pub(super) fn postprocess(&self) -> Vec<u8> {
-        // for group in 0..512 {
-        //     for slice in 0..2 {
-        //         for batch in 0..16 {
-        //             for subntt in 0..8 {
-        //                 for cores in self.banks.chunks(8) {
-        //                     for row in 0..64 {
-        //                         for bank in cores {}
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        // self.banks
-        //     .iter()
-        //     .flat_map(|v| v.to_vec())
-        //     .collect::<Vec<u8>>()
-
         for vb in self.banks.iter() {
             log::info!("Length: {}", vb.len());
         }
+        // TODO: in postprocessing now result is checking with ready data
         check_result(self.banks.to_vec());
         Default::default()
     }
 }
 
-fn already_preprocess() -> Vec<Vec<u8>> {
-    let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
-    for _ in 0..NOF_BANKS {
-        banks.push(Default::default());
-    }
-    for i in 0..16 {
-        let fname = format!(
-            "/home/administrator/ekaterina/blaze/tests/test_data/inbank{:02}.dat",
-            i
-        );
-
-        println!("{}", fname);
-        let mut f = File::open(&fname).expect("no file found");
-        f.read_to_end(&mut banks[i]);
-    }
-
-    banks
-}
-
 fn check_result(banks: Vec<Vec<u8>>) {
-    for i in 0..16 {
+    for (i, bank) in banks.iter().enumerate().take(16) {
         let mut banks_exp: Vec<u8> = Default::default();
         let fname = format!(
             "/home/administrator/ekaterina/blaze/tests/test_data/outbank{:02}.dat",
@@ -163,34 +125,51 @@ fn check_result(banks: Vec<Vec<u8>>) {
 
         println!("{}", fname);
         let mut f = File::open(&fname).expect("no file found");
-        f.read_to_end(&mut banks_exp);
+        let _ = f.read_to_end(&mut banks_exp);
 
-        if banks_exp == banks[i] {
+        if banks_exp.eq(bank) {
             log::info!("Bank {} is correct", i);
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
-    use std::env;
+    use std::{fs::File, io::Read};
 
-    use num_bigint::BigInt;
-    use serde_json::from_str;
-
-    use super::{already_preprocess, NTTBanks};
+    use super::{NTTBanks, NOF_BANKS};
 
     #[test]
-    fn it_works() {
+    fn preprocess_correctness() {
         let exp = already_preprocess();
-        let got = NTTBanks::preprocess(
-            vec![0; 0],
-            "/home/administrator/ekaterina/blaze/tests/test_data/in.txt".to_string(),
-        );
-        for i in 0..16 {
-            if exp[i] == got.banks[i] {
+        let fname =
+            "/home/administrator/ekaterina/blaze/tests/test_data/in_prepare.dat".to_string();
+        let mut f = File::open(&fname).expect("no file found");
+        let mut in_vec: Vec<u8> = Default::default();
+        let _ = f.read_to_end(&mut in_vec);
+        let got = NTTBanks::preprocess(in_vec);
+
+        for (i, expb) in exp.iter().enumerate().take(16) {
+            if got.banks[i].eq(expb) {
                 println!("Bank {} is correct", i);
             }
         }
+    }
+
+    fn already_preprocess() -> Vec<Vec<u8>> {
+        let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
+        for _ in 0..NOF_BANKS {
+            banks.push(Default::default());
+        }
+        for (i, bank) in banks.iter_mut().enumerate().take(16) {
+            let fname = format!(
+                "/home/administrator/ekaterina/blaze/tests/test_data/inbank{:02}.dat",
+                i
+            );
+            println!("Read {}", fname);
+            let mut f = File::open(&fname).expect("no file found");
+            let _ = f.read_to_end(bank);
+        }
+
+        banks
     }
 }

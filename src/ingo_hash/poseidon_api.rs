@@ -117,7 +117,7 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         Ok(())
     }
 
-    fn start_process(&self, param: Option<usize>) -> Result<()> {
+    fn start_process(&self, _param: Option<usize>) -> Result<()> {
         todo!()
     }
 
@@ -197,11 +197,8 @@ impl PoseidonClient {
 
     pub fn get_raw_results(&self, num_of_results: u32) -> Result<Vec<u8>> {
         let mut res = vec![0; (64 * num_of_results).try_into().unwrap()];
-        self.dclient.dma_read(
-            self.dclient.cfg.dma_baseaddr,
-            DMA_RW::OFFSET,
-            &mut res,
-        )?;
+        self.dclient
+            .dma_read(self.dclient.cfg.dma_baseaddr, DMA_RW::OFFSET, &mut res)?;
         Ok(res)
     }
 

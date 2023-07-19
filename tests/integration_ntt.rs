@@ -1,22 +1,28 @@
-use ingo_blaze::{driver_client::dclient::*, ingo_ntt::*};
+use ingo_blaze::{driver_client::*, ingo_ntt::*};
 use log::info;
-use std::{env, error::Error};
+use std::{env, error::Error, fs::File, io::Read};
 
 #[test]
 fn ntt_test() -> Result<(), Box<dyn Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
+    let fname = env::var("FNAME").unwrap_or_else(|_| {
+        "/home/administrator/ekaterina/blaze/tests/test_data/in_prepare.dat".to_string()
+    });
+    let mut f = File::open(fname).expect("no file found");
+    let mut in_vec: Vec<u8> = Default::default();
+    f.read_to_end(&mut in_vec)?;
+
     let buf_host = 0;
     let buf_kernel = 0;
 
     info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
     let driver = NTTClient::new(NTT::Ntt, dclient);
     log::info!("Starting set NTT data");
     driver.set_data(NTTInput {
-        buf_host: buf_host,
-        // data: vec![0; 0],
-        fname: "test".to_string(),
+        buf_host,
+        data: in_vec,
     })?;
     log::info!("Successfully set NTT data");
     driver.driver_client.initialize_cms()?;

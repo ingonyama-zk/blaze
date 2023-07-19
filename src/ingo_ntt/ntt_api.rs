@@ -2,7 +2,7 @@ use super::{
     ntt_cfg::{NTTBanks, NTTConfig, NOF_BANKS},
     ntt_hw_code::*,
 };
-use crate::{driver_client::dclient::*, error::*};
+use crate::{driver_client::*, error::*};
 use std::{fmt::Debug, os::unix::fs::FileExt};
 
 pub enum NTT {
@@ -20,8 +20,7 @@ pub struct NttInit {}
 pub struct NTTInput {
     pub buf_host: usize,
     /// Vector of size 2**27
-    // pub data: Vec<u8>,
-    pub fname: String,
+    pub data: Vec<u8>,
 }
 
 impl DriverPrimitive<NTT, NttInit, NTTInput, Vec<u8>> for NTTClient {
@@ -83,13 +82,13 @@ impl DriverPrimitive<NTT, NttInit, NTTInput, Vec<u8>> for NTTClient {
     }
 
     fn set_data(&self, input: NTTInput) -> Result<()> {
-        let data_banks = NTTBanks::preprocess(vec![0; 0], input.fname);
+        let data_banks = NTTBanks::preprocess(input.data);
 
         data_banks
             .banks
             .into_iter()
             .enumerate()
-            .map(|(i, data_in)| {
+            .try_for_each(|(i, data_in)| {
                 let offset = self.ntt_cfg.ntt_bank_start_addr(i, input.buf_host);
                 self.driver_client.dma_write(
                     self.driver_client.cfg.dma_baseaddr,
@@ -97,7 +96,6 @@ impl DriverPrimitive<NTT, NttInit, NTTInput, Vec<u8>> for NTTClient {
                     data_in.as_slice(),
                 )
             })
-            .collect()
     }
 
     fn wait_result(&self) -> Result<()> {
