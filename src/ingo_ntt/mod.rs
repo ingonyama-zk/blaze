@@ -1,5 +1,5 @@
 mod ntt_api;
-mod ntt_cfg;
+mod ntt_data;
 mod ntt_hw_code;
 
 pub use ntt_api::*;

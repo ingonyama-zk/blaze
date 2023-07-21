@@ -6,12 +6,16 @@ use std::{env, error::Error, fs::File, io::Read};
 fn ntt_test() -> Result<(), Box<dyn Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let fname = env::var("FNAME").unwrap_or_else(|_| {
-        "/home/administrator/ekaterina/blaze/tests/test_data/in_prepare.dat".to_string()
-    });
-    let mut f = File::open(fname).expect("no file found");
+
+    let input_fname = env::var("INFNAME").unwrap();
+    let mut in_f = File::open(input_fname).expect("no file found");
     let mut in_vec: Vec<u8> = Default::default();
-    f.read_to_end(&mut in_vec)?;
+    in_f.read_to_end(&mut in_vec)?;
+
+    let output_fname = env::var("OUTFNAME").unwrap();
+    let mut out_f = File::open(output_fname).expect("no file found");
+    let mut out_vec: Vec<u8> = Default::default();
+    out_f.read_to_end(&mut out_vec)?;
 
     let buf_host = 0;
     let buf_kernel = 0;
@@ -38,8 +42,9 @@ fn ntt_test() -> Result<(), Box<dyn Error>> {
     }
 
     log::info!("Try to get NTT result");
-    let res = driver.result(Some(buf_kernel))?;
-    log::info!("NTT result: {:?}", res.unwrap().len());
+    let res = driver.result(Some(buf_kernel))?.unwrap();
+    log::info!("Get NTT result of size: {:?}", res.len());
+    assert_eq!(res, out_vec);
 
     Ok(())
 }

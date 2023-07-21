@@ -7,9 +7,7 @@ use log::info;
 fn bench_ntt_calculation(c: &mut Criterion) {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let fname = env::var("FNAME").unwrap_or_else(|_| {
-        "/home/administrator/ekaterina/blaze/tests/test_data/in_prepare.dat".to_string()
-    });
+    let fname = env::var("FNAME").unwrap();
     let mut f = File::open(fname).expect("no file found");
     let mut in_vec: Vec<u8> = Default::default();
     let _ = f.read_to_end(&mut in_vec);

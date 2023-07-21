@@ -1,5 +1,3 @@
-use std::{fs::File, io::Read};
-
 pub(super) const NOF_BANKS: usize = 16;
 
 #[derive(Debug, Copy, Clone)]
@@ -38,10 +36,7 @@ pub(super) struct NTTConfig {
 }
 
 impl NTTConfig {
-    // const HBM_BANK_SIZE: u32 = 536870912; // 2**29
-    // const NTT_WORD_SIZE: u32 = 32;
-    // const NTT_BUFFER_SIZE_WORDS: u32 = 8388608; // ntt_buffer_size//ntt_word_size
-    pub const NTT_BUFFER_SIZE: usize = 268435456; // ntt_buffer_size = hbm_bank_size // 2
+    pub const NTT_BUFFER_SIZE: usize = 268435456; // ntt_buffer_size = 2**29 // 2
 
     pub fn ntt_cfg() -> Self {
         NTTConfig {
@@ -64,6 +59,7 @@ pub(super) struct NTTBanks {
 }
 
 impl NTTBanks {
+    const NTT_SIZE: usize = 134217728; // 2**27
     const NTT_WORD_SIZE: usize = 32;
     const NTT_NOF_MMU_IN_CORE: usize = 8;
 
@@ -74,6 +70,7 @@ impl NTTBanks {
     const NTT_NOF_ROW: usize = 64;
 
     pub(super) fn preprocess(input: Vec<u8>) -> Self {
+        log::info!("Start preparing the input vector before NTT");
         let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
         for _ in 0..NOF_BANKS {
             banks.push(Default::default());
@@ -106,43 +103,61 @@ impl NTTBanks {
     }
 
     pub(super) fn postprocess(&self) -> Vec<u8> {
-        for vb in self.banks.iter() {
-            log::info!("Length: {}", vb.len());
+        log::info!("Start processing the result after NTT");
+        let mut res = vec![0u8; Self::NTT_SIZE * Self::NTT_WORD_SIZE];
+        log::debug!("Allocate vector of size: {}", res.len());
+
+        let mut group_start = [0, 0];
+        let offset = [0, 512];
+        let mut bank_offset = vec![0usize; 16];
+        for group in 0..Self::NTT_NOF_GROUPS {
+            let mut block = 0;
+            for i in 0..2 {
+                group_start[i] = offset[i] + group;
+            }
+            for _ in 0..Self::NTT_NOF_SLICE {
+                for _ in 0..Self::NTT_NOF_BATCH {
+                    for _ in 0..Self::NTT_NOF_SUBNTT {
+                        for icore in 0..2 {
+                            let isubntt = group_start[icore] + 1024 * block;
+                            let mut i = 0;
+                            for _ in 0..Self::NTT_NOF_ROW {
+                                let cores = if group % 2 == 0 {
+                                    [[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]]
+                                } else {
+                                    [[8, 9, 10, 11, 12, 13, 14, 15], [0, 1, 2, 3, 4, 5, 6, 7]]
+                                };
+                                for bank_num in cores[icore].into_iter() {
+                                    let addr = 512 * isubntt + i;
+                                    res[addr * 32..(addr + 1) * 32].copy_from_slice(
+                                        &self.banks[bank_num]
+                                            [bank_offset[bank_num]..bank_offset[bank_num] + 32],
+                                    );
+                                    bank_offset[bank_num] += 32;
+                                    i += 1;
+                                }
+                            }
+                        }
+                        block += 1;
+                    }
+                }
+            }
+            log::debug!("Group {} is ready", group)
         }
-        // TODO: in postprocessing now result is checking with ready data
-        check_result(self.banks.to_vec());
-        Default::default()
+        res
     }
 }
 
-fn check_result(banks: Vec<Vec<u8>>) {
-    for (i, bank) in banks.iter().enumerate().take(16) {
-        let mut banks_exp: Vec<u8> = Default::default();
-        let fname = format!(
-            "/home/administrator/ekaterina/blaze/tests/test_data/outbank{:02}.dat",
-            i
-        );
-
-        println!("{}", fname);
-        let mut f = File::open(&fname).expect("no file found");
-        let _ = f.read_to_end(&mut banks_exp);
-
-        if banks_exp.eq(bank) {
-            log::info!("Bank {} is correct", i);
-        }
-    }
-}
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::Read};
+    use std::{env, fs::File, io::Read};
 
     use super::{NTTBanks, NOF_BANKS};
 
     #[test]
     fn preprocess_correctness() {
         let exp = already_preprocess();
-        let fname =
-            "/home/administrator/ekaterina/blaze/tests/test_data/in_prepare.dat".to_string();
+        let fname = env::var("FNAME").unwrap();
         let mut f = File::open(&fname).expect("no file found");
         let mut in_vec: Vec<u8> = Default::default();
         let _ = f.read_to_end(&mut in_vec);
@@ -156,15 +171,50 @@ mod tests {
     }
 
     fn already_preprocess() -> Vec<Vec<u8>> {
+        let fdir = env::var("FDIR").unwrap();
         let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
         for _ in 0..NOF_BANKS {
             banks.push(Default::default());
         }
         for (i, bank) in banks.iter_mut().enumerate().take(16) {
-            let fname = format!(
-                "/home/administrator/ekaterina/blaze/tests/test_data/inbank{:02}.dat",
-                i
-            );
+            let fname = format!("{}/inbank{:02}.dat", fdir, i);
+            println!("Read {}", fname);
+            let mut f = File::open(&fname).expect("no file found");
+            let _ = f.read_to_end(bank);
+        }
+
+        banks
+    }
+
+    #[test]
+    fn postprocess_correctness() {
+        let fname = env::var("FNAME").unwrap();
+
+        let in_banks: Vec<Vec<u8>> = already_postprocess();
+        let ntt_banks = NTTBanks {
+            banks: in_banks.try_into().unwrap(),
+        };
+        let got = ntt_banks.postprocess();
+        println!("Got result of size: {}", got.len());
+
+        let mut f = File::open(&fname).expect("no file found");
+        let mut exp_out_vec: Vec<u8> = Default::default();
+        let _ = f.read_to_end(&mut exp_out_vec);
+        println!("Result is read from: {}", fname);
+
+        if exp_out_vec.eq(&got) {
+            println!("Result is correct");
+        }
+    }
+
+    fn already_postprocess() -> Vec<Vec<u8>> {
+        let fdir = env::var("FDIR").unwrap();
+        let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
+        for _ in 0..NOF_BANKS {
+            banks.push(Default::default());
+        }
+        for (i, bank) in banks.iter_mut().enumerate().take(16) {
+            let fname = format!("{}/outbank{:02}.dat", fdir, i);
             println!("Read {}", fname);
             let mut f = File::open(&fname).expect("no file found");
             let _ = f.read_to_end(bank);

@@ -1,5 +1,5 @@
 use super::{
-    ntt_cfg::{NTTBanks, NTTConfig, NOF_BANKS},
+    ntt_data::{NTTBanks, NTTConfig, NOF_BANKS},
     ntt_hw_code::*,
 };
 use crate::{driver_client::*, error::*};
@@ -19,7 +19,6 @@ pub struct NttInit {}
 #[derive(Debug, Clone)]
 pub struct NTTInput {
     pub buf_host: usize,
-    /// Vector of size 2**27
     pub data: Vec<u8>,
 }
 
@@ -130,7 +129,6 @@ impl DriverPrimitive<NTT, NttInit, NTTInput, Vec<u8>> for NTTClient {
                 &mut res_banks.banks[i],
             )?;
         }
-        log::info!("Get NTT result");
 
         let res = res_banks.postprocess();
         Ok(Some(res))
