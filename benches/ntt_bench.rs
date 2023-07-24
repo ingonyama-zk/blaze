@@ -4,7 +4,7 @@ use criterion::*;
 use ingo_blaze::{driver_client::*, ingo_ntt::*};
 use log::info;
 
-fn bench_ntt_calculation(c: &mut Criterion) {
+fn bench_ntt_calc(c: &mut Criterion) {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
     let fname = env::var("FNAME").unwrap();
@@ -29,17 +29,17 @@ fn bench_ntt_calculation(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("NTT computation");
 
+    log::info!("Starting NTT");
     group.bench_function("NTT", |b| {
         b.iter(|| {
-            log::info!("Starting NTT");
             let _ = driver.initialize(NttInit {});
             let _ = driver.start_process(Some(buf_kernel));
             let _ = driver.wait_result();
             let _ = driver.reset();
-            log::info!("Finishing NTT");
         })
     });
     group.finish();
+    log::info!("Finishing NTT");
 
     log::info!("Try to get NTT result");
     let res = driver.result(Some(buf_kernel)).unwrap();
@@ -49,6 +49,6 @@ fn bench_ntt_calculation(c: &mut Criterion) {
 criterion_group! {
     name = benches;
     config = Criterion::default().sample_size(10);
-    targets = bench_ntt_calculation
+    targets = bench_ntt_calc
 }
 criterion_main!(benches);

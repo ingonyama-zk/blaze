@@ -3,7 +3,7 @@ use log::info;
 use std::{env, error::Error, fs::File, io::Read};
 
 #[test]
-fn ntt_test() -> Result<(), Box<dyn Error>> {
+fn ntt_test_correctness() -> Result<(), Box<dyn Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
 
