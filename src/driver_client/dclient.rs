@@ -97,16 +97,12 @@ impl DriverClient {
     }
 
     /// Setup decouple signal to isolate the user logic during reconfiguration, protecting the shell from spurious signals.
-    pub fn set_dfx_decoupling(&self, signal: u8) -> Result<()> {
-        self.ctrl
-            .write_all_at(
-                &[signal, 0, 0, 0],
-                self.cfg.ctrl_dfx_decoupler_baseaddr + DFX_DECOUPLER::DECOUPLE as u64,
-            )
-            .map_err(|e| DriverClientError::WriteError {
-                offset: "DFX setup error".to_string(),
-                source: e,
-            })?;
+    pub fn set_dfx_decoupling(&self, signal: u32) -> Result<()> {
+        self.ctrl_write_u32(
+            self.cfg.ctrl_dfx_decoupler_baseaddr,
+            DFX_DECOUPLER::DECOUPLE,
+            signal,
+        )?;
         Ok(())
     }
 
@@ -117,6 +113,7 @@ impl DriverClient {
             CMS_ADDR::ADDR_CPU2HIF_CMS_INITIALIZE,
             1,
         )?;
+        sleep(Duration::from_millis(200));
         Ok(())
     }
 
@@ -221,10 +218,9 @@ impl DriverClient {
             HBICAP_ADDR::ADDR_CPU2HIF_HBICAP_TRANSFER_SIZE,
             (binary.len() / 4) as u32,
         )?;
-        self.dma_write_by_chunks(self.cfg.ctrl_hbicap_baseaddr, DMA_RW::OFFSET, binary, 4)?;
-
+        self.dma_write(self.cfg.dma_hbicap_baseaddr, DMA_RW::OFFSET, binary)?;
         while !self.is_hbicap_ready() {
-            sleep(Duration::from_millis(1));
+            sleep(Duration::from_millis(10));
         }
         self.set_dfx_decoupling(0)?;
         self.ctrl_read_u32(

@@ -19,7 +19,7 @@ pub struct DriverConfig {
 
     // DMA
     pub(crate) dma_baseaddr: u64,
-    // pub(crate) dma_hbicap_baseaddr: u64,
+    pub(crate) dma_hbicap_baseaddr: u64,
 }
 
 impl DriverConfig {
@@ -42,6 +42,6 @@ fn u250_cfg() -> DriverConfig {
         dma_firewall_baseaddr: 0x04080000,
         ctrl_dfx_decoupler_baseaddr: 0x04090000,
         dma_baseaddr: 0x0000000000000000,
-        // dma_hbicap_baseaddr: 0x1000000000000000,
+        dma_hbicap_baseaddr: 0x1000000000000000,
     }
 }

@@ -94,7 +94,7 @@ impl NTTBanks {
                     }
                 }
             }
-            log::debug!("Group {} is ready", group)
+            log::trace!("Group {} is ready", group)
         }
 
         NTTBanks {
@@ -142,7 +142,7 @@ impl NTTBanks {
                     }
                 }
             }
-            log::debug!("Group {} is ready", group)
+            log::trace!("Group {} is ready", group)
         }
         res
     }
