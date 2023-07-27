@@ -223,6 +223,9 @@ impl DriverClient {
             sleep(Duration::from_millis(10));
         }
         self.set_dfx_decoupling(0)?;
+        self.set_firewall_block(self.cfg.ctrl_firewall_baseaddr, false)?;
+        self.set_firewall_block(self.cfg.dma_firewall_baseaddr, false)?;
+        
         self.ctrl_read_u32(
             self.cfg.ctrl_hbicap_baseaddr,
             HBICAP_ADDR::ADDR_HIF2CPU_HBICAP_ABORT_STATUS,

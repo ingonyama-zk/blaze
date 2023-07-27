@@ -1,4 +1,4 @@
-use ingo_blaze::{driver_client::*, ingo_ntt::*};
+use ingo_blaze::{driver_client::*, ingo_ntt::*, utils};
 use log::info;
 use std::{env, error::Error, fs::File, io::Read};
 
@@ -22,6 +22,16 @@ fn ntt_test_correctness() -> Result<(), Box<dyn Error>> {
 
     info!("Create Driver API instance");
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+    if std::env::var("BIN").is_ok() {
+        let bin_fname = std::env::var("BIN").unwrap();
+        info!("Start reading binary");
+        let bin = utils::read_binary_file(&bin_fname)?;
+        info!("Start setup FPGA");
+        dclient.setup_before_load_binary()?;
+        info!("Start loading driver");
+        dclient.load_binary(&bin)?;
+    }
+
     let driver = NTTClient::new(NTT::Ntt, dclient);
     log::info!("Starting set NTT data");
     driver.set_data(NTTInput {
