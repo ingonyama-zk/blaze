@@ -39,11 +39,40 @@ impl From<FIREWALL_ADDR> for u64 {
 /// voltage and current, and also controls automatic thermal shutdown.
 #[derive(Debug, Copy, Clone)]
 pub enum CMS_ADDR {
+    ADDR_SENSOR_OFFSET = 0x028000,
+    // CMS
     ADDR_CPU2HIF_CMS_INITIALIZE = 0x020000,
     ADDR_HIF2CPU_CMS_CONTROL_REG = 0x0018,
+    
+    // TEMPATURE
     TEMP_MAX = 0x00F8,
     TEMP_AVG = 0x00FC,
     TEMP_INST = 0x0100,
+    
+    // POWER
+    AUX_12V_VOLTAGE_MAX = 0x0044,
+    AUX_12V_VOLTAGE_AVG = 0x0048,
+    AUX_12V_VOLTAGE_INST = 0x004C,
+
+    AUX_12V_CURRENT_MAX = 0x00D4,
+    AUX_12V_CURRENT_AVG = 0x00D8,
+    AUX_12V_CURRENT_INST = 0x00DC,
+
+    PEX_12V_VOLTAGE_MAX = 0x0020,
+    PEX_12V_VOLTAGE_AVG = 0x0024,
+    PEX_12V_VOLTAGE_INST = 0x0028,
+
+    PEX_12V_CURRENT_MAX = 0x00C8,
+    PEX_12V_CURRENT_AVG = 0x00CC,
+    PEX_12V_CURRENT_INST = 0x00D0,
+
+    PEX_3v3_VOLTAGE_MAX = 0x002C,
+    PEX_3v3_VOLTAGE_AVG = 0x0030,
+    PEX_3v3_VOLTAGE_INST = 0x0034,
+
+    PEX_3v3_CURRENT_MAX = 0x0278,
+    PEX_3v3_CURRENT_AVG = 0x027C,
+    PEX_3v3_CURRENT_INST = 0x0280,
 }
 impl From<CMS_ADDR> for u64 {
     fn from(addr: CMS_ADDR) -> Self {

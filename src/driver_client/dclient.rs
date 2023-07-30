@@ -85,6 +85,12 @@ impl DriverConfig {
         let reader = std::io::BufReader::new(file);
         serde_json::from_reader(reader).unwrap()
     }
+
+    pub fn driver_client_u250_cfg() -> Self {
+        let file = std::fs::File::open("configs/u250_cfg.json").expect("");
+        let reader = std::io::BufReader::new(file);
+        serde_json::from_reader(reader).unwrap()
+    }
 }
 
 /// The [`DriverClient`] is described bunch of addreses on FPGA which called [`DriverConfig`] also
@@ -172,23 +178,7 @@ impl DriverClient {
             ctrl_reg.unwrap() | 1 << 27,
         )?;
         Ok(())
-    }
-
-    pub fn monitor_temperature(&self) -> Result<(u32, u32, u32)> {
-        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + 0x028000;
-
-        let temp_max = self
-            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_MAX)
-            .unwrap();
-        let temp_avg = self
-            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_AVG)
-            .unwrap();
-        let temp_inst = self
-            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_INST)
-            .unwrap();
-
-        Ok((temp_inst, temp_avg, temp_max))
-    }
+    }  
 
     // HBICAP
     /// Checking HBICAP status register. Return `true` if zero (previous operation done) and
@@ -645,6 +635,160 @@ impl DriverClient {
         let ret_dma = self.ctrl_read_u32(self.cfg.dma_firewall_baseaddr, FIREWALL_ADDR::STATUS);
 
         log::info!("DMA Firewall Status: {:#X?}", ret_dma.unwrap());
+    }
+    
+    // ==== sensor data  ====>
+
+    fn get_cms_control_reg(&self) -> u32 {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+        let data = self.ctrl_read_u32(ctrl_cms_baseaddr, 0x0018 as u64).unwrap();
+        
+        return data
+    }
+    
+    fn set_cms_control_reg(&self, data: u32) {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+
+        self.ctrl_write_u32(ctrl_cms_baseaddr, 0x0018 as u64, data);
+    }
+
+    pub fn reset_sensor_data(&self) {
+        let ctrl_reg = self.get_cms_control_reg();
+        self.set_cms_control_reg(ctrl_reg | 1)
+    }
+
+    /// Monitor the temperature of a device.
+    ///
+    /// This function reads the instantaneous, average, and maximum temperatures 
+    /// from the device's control monitor system (CMS). The temperatures are 
+    /// read from specific addresses defined in the CMS_ADDR enumeration.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// let device = Device::new();
+    /// match device.monitor_temperature() {
+    ///     Ok((inst, avg, max)) => println!("Instant: {}, Average: {}, Max: {}", inst, avg, max),
+    ///     Err(e) => println!("Error reading temperatures: {}", e),
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if there is a problem reading 
+    /// any of the temperature values from the CMS.
+    ///
+    /// # Returns
+    ///
+    /// A tuple of three `u32` values representing the instantaneous, 
+    /// average, and maximum temperatures, respectively, if successful.
+    ///
+    /// ```
+    pub fn monitor_temperature(&self) -> Result<(u32, u32, u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+
+        let temp_max = self
+            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_MAX)
+            .unwrap();
+        let temp_avg = self
+            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_AVG)
+            .unwrap();
+        let temp_inst = self
+            .ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::TEMP_INST)
+            .unwrap();
+
+        Ok((temp_inst, temp_avg, temp_max))
+    }
+
+    fn get_12v_aux_voltage(&self) -> Result<(u32,u32,u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+        
+        let voltage_max = self.ctrl_read_u32(ctrl_cms_baseaddr,  CMS_ADDR::AUX_12V_VOLTAGE_MAX).unwrap();
+        let voltage_avg = self.ctrl_read_u32(ctrl_cms_baseaddr,  CMS_ADDR::AUX_12V_VOLTAGE_AVG).unwrap();
+        let voltage_inst = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::AUX_12V_VOLTAGE_INST).unwrap();
+        return Ok((voltage_inst / 1000, voltage_avg / 1000, voltage_max / 1000))
+    }
+
+    fn get_12v_aux_current(&self) -> Result<(u32,u32,u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+        let current_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::AUX_12V_CURRENT_MAX).unwrap();
+        let current_avg = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::AUX_12V_CURRENT_AVG).unwrap();
+        let current_inst  = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::AUX_12V_CURRENT_INST).unwrap();
+        
+        return Ok((current_inst / 1000, current_avg / 1000, current_max / 1000))
+    }
+    
+    fn get_12v_pex_voltage(&self) -> Result<(u32,u32,u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+
+        let voltage_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_12V_VOLTAGE_MAX).unwrap();
+        let voltage_avg = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_12V_VOLTAGE_AVG).unwrap();
+        let voltage_inst = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_12V_VOLTAGE_INST).unwrap();
+        
+        return Ok((voltage_inst / 1000, voltage_avg / 1000, voltage_max / 1000))
+    }
+
+    fn get_12v_pex_current(&self) -> Result<(u32,u32,u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+
+        let current_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_12V_CURRENT_MAX).unwrap();
+        let current_avg = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_12V_CURRENT_AVG).unwrap();
+        let current_inst = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_12V_CURRENT_INST).unwrap();
+
+        return Ok((current_inst / 1000, current_avg / 1000, current_max / 1000))
+    }
+    
+    fn get_3v3_pex_voltage(&self) -> Result<(u32,u32,u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+
+        let voltage_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_3v3_VOLTAGE_MAX).unwrap();
+        let voltage_avg = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_3v3_VOLTAGE_AVG).unwrap();
+        let voltage_inst = self.ctrl_read_u32(ctrl_cms_baseaddr,CMS_ADDR::PEX_3v3_VOLTAGE_INST).unwrap();
+
+        return Ok((voltage_inst / 1000, voltage_avg / 1000, voltage_max / 1000))
+    }
+
+    fn get_3v3_pex_current(&self) -> Result<(u32,u32,u32)> {
+        let ctrl_cms_baseaddr = self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_SENSOR_OFFSET as u64;
+
+        let current_max = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_3v3_CURRENT_MAX).unwrap();
+        let current_avg = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_3v3_CURRENT_AVG).unwrap();
+        let current_inst = self.ctrl_read_u32(ctrl_cms_baseaddr, CMS_ADDR::PEX_3v3_CURRENT_INST).unwrap();
+        
+        return Ok((current_inst / 1000, current_avg / 1000, current_max / 1000))
+    }
+
+    fn get_aux_power(&self) -> Result<(u32,u32,u32)> {
+        let aux_v = self.get_12v_aux_voltage().unwrap();
+        let aux_i = self.get_12v_aux_current().unwrap();
+        
+        return Ok((aux_v.0 * aux_i.0, aux_v.1 * aux_i.1, aux_v.2 * aux_i.2))
+    }
+    
+    fn get_pex_12v_power(&self) -> Result<(u32,u32,u32)> {
+        let pex_12v_v = self.get_12v_pex_voltage().unwrap();
+        let pex_12v_i = self.get_12v_pex_current().unwrap();
+
+        return Ok((pex_12v_v.0 * pex_12v_i.0, pex_12v_v.0 * pex_12v_i.0, pex_12v_v.0 * pex_12v_i.0))
+    }
+    
+    fn get_pex_3v3_power(&self) -> Result<(u32,u32,u32)> {
+        let pex_3v3_v = self.get_3v3_pex_voltage().unwrap();
+        let pex_3v3_i = self.get_3v3_pex_current().unwrap();
+        
+        return Ok((pex_3v3_v.0 * pex_3v3_i.0, pex_3v3_v.0 * pex_3v3_i.0, pex_3v3_v.0 * pex_3v3_i.0))
+    }
+
+    pub fn monitor_power(&self) -> Result<(u32,u32,u32)> {
+        let aux_p = self.get_aux_power().unwrap();
+        let pex_12v_p = self.get_pex_12v_power().unwrap();
+        let pex_3v3_p = self.get_pex_3v3_power().unwrap();
+        
+        return Ok((
+            (aux_p.0 + pex_12v_p.0 + pex_3v3_p.0),
+            (aux_p.1 + pex_12v_p.1 + pex_3v3_p.1),
+            (aux_p.2 + pex_12v_p.2 + pex_3v3_p.2),
+        ))
     }
 
     // ==== utils ====>

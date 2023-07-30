@@ -31,6 +31,10 @@ impl DmaBuffer {
         &mut self.0
     }
 
+    pub fn set_len(&mut self, num: usize) {
+        unsafe { self.0.set_len(num) }
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -38,12 +42,8 @@ impl DmaBuffer {
 
 pub unsafe fn aligned_vec<T>(n_bytes: usize) -> Vec<u8> {
     let n_units = (n_bytes / mem::size_of::<T>()) + 1;
-}
 
-pub unsafe fn aligned_vec<T: Default>(n_bytes: usize) -> Vec<u8> {
-    let n_units = (n_bytes / mem::size_of::<T>()) + 1;
-
-    let mut aligned: Vec<T> = vec![T::default(); n_units];
+    let mut aligned: Vec<T> = Vec::with_capacity(n_units);
 
     let ptr = aligned.as_mut_ptr();
     let len_units = aligned.len();
