@@ -1,0 +1,12 @@
+{
+    "ctrl_baseaddr": "0x00000000",
+    "ctrl_cms_baseaddr": "0x04000000",
+    "ctrl_qspi_baseaddr": "0x04040000",
+    "ctrl_hbicap_baseaddr": "0x04050000",
+    "ctrl_mgmt_ram_baseaddr": "0x04060000",
+    "ctrl_firewall_baseaddr": "0x04070000",
+    "dma_firewall_baseaddr": "0x04080000",
+    "ctrl_dfx_decoupler_baseaddr": "0x04090000",
+    "dma_baseaddr": "0x0000100000000000",
+    "dma_hbicap_baseaddr": "0x1000000000000000"
+}
