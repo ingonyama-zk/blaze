@@ -84,7 +84,7 @@ pub struct MSMResult {
 pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
 pub const PRECOMPUTE_FACTOR: u32 = 8;
 
-impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
+impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult, usize> for MSMClient {
     /// Creates a new [`MSMClient`].
     fn new(init: MSMInit, dclient: DriverClient) -> Self {
         MSMClient {

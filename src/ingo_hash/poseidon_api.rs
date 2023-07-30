@@ -1,14 +1,16 @@
 use packed_struct::prelude::PackedStruct;
-use std::{option::Option, thread::sleep, time::Duration};
+use std::{option::Option, thread::sleep, time::{Duration, Instant}};
 use strum::IntoEnumIterator;
 
 use crate::{
     driver_client::dclient::*, driver_client::dclient_code::*, error::*,
-    ingo_hash::hash_hw_code::*, ingo_hash::utils::*, utils::convert_to_32_byte_array,
+    ingo_hash::{hash_hw_code::*, dma_buffer::Align4K}, ingo_hash::utils::*, utils::convert_to_32_byte_array,
 };
 
 use csv;
 use num::{bigint::BigUint, Num};
+
+use super::dma_buffer::DmaBuffer;
 
 pub enum Hash {
     Poseidon,
@@ -29,6 +31,11 @@ pub struct PoseidonResult {
     pub hash_byte: [u8; 32],
     pub hash_id: u32,
     pub layer_id: u32,
+}
+
+pub struct PoseidonReadResult<'a> {
+    pub expected_result: usize,
+    pub result_store_buffer: &'a mut DmaBuffer,
 }
 
 impl PoseidonResult {
@@ -73,8 +80,14 @@ impl PoseidonResult {
     }
 }
 
-impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResult>>
-    for PoseidonClient
+impl
+    DriverPrimitive<
+        Hash,
+        PoseidonInitializeParameters,
+        &[u8],
+        Vec<PoseidonResult>,
+        PoseidonReadResult<'_>,
+    > for PoseidonClient
 {
     fn new(_ptype: Hash, dclient: DriverClient) -> Self {
         PoseidonClient { dclient }
@@ -103,7 +116,11 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
     }
 
     fn initialize(&self, param: PoseidonInitializeParameters) -> Result<()> {
-        self.reset()?;
+        //self.reset()?;
+        
+        self.dclient.initialize_cms()?;
+        self.dclient.set_dma_firewall_prescale(0x4FFF)?;
+
         self.set_initialize_mode(true)?;
 
         self.load_instructions(&param.instruction_path)
@@ -116,6 +133,7 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         self.set_merkle_tree_height(param.tree_height)?;
         self.set_tree_start_layer_for_tree(param.tree_mode)?;
         log::debug!("set merkle tree height: {:?}", param.tree_height);
+
         Ok(())
     }
 
@@ -130,21 +148,29 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         todo!()
     }
 
-    fn result(&self, expected_result: Option<usize>) -> Result<Option<Vec<PoseidonResult>>> {
-        let mut results: Vec<PoseidonResult> = vec![];
+    fn result(&self, _param: Option<PoseidonReadResult>) -> Result<Option<Vec<PoseidonResult>>> {
+        let params = _param.unwrap();
 
-        loop {
-            let num_of_pending_results = self.get_num_of_pending_results()?;
+        let start_read = Instant::now();
+        self.dclient.dma_read_into(
+            self.dclient.cfg.dma_baseaddr,
+            DMA_RW::OFFSET,
+            params.result_store_buffer,
+        );
+        let duration_read = start_read.elapsed();
+        log::info!("took {:?} to read dma", duration_read);
 
-            if results.len() >= expected_result.unwrap() {
-                break;
-            }
 
-            let res = self.get_raw_results(num_of_pending_results)?;
+        assert_eq!(
+            params.result_store_buffer.len(),
+            params.expected_result * 64
+        );
 
-            let mut result = PoseidonResult::parse_poseidon_hash_results(res);
-            results.append(&mut result);
-        }
+        let start_parse = Instant::now();
+        let results =
+            PoseidonResult::parse_poseidon_hash_results(params.result_store_buffer.get().to_vec());
+        let duration_parse = start_parse.elapsed();
+        log::info!("took {:?} to parse dma data", duration_parse);
 
         Ok(Some(results))
     }
@@ -217,45 +243,62 @@ impl PoseidonClient {
             let element_one_str = result.get(result.len() - 1).unwrap();
             let element_two_str = result.get(result.len() - 2).unwrap();
 
-            // TODO: check type conversation
-            let first_value_to_send: [u8; 32] = convert_to_32_byte_array(
+            let mut first_value_to_send = DmaBuffer::new::<Align4K>(32);
+            let mut second_value_to_send = DmaBuffer::new::<Align4K>(32);
+
+            first_value_to_send.extend_from_slice(&convert_to_32_byte_array(
                 BigUint::from_str_radix(element_one_str, 10)
                     .unwrap()
                     .to_bytes_le()
                     .as_slice(),
-            );
-            let second_value_to_send: [u8; 32] = convert_to_32_byte_array(
+            ));
+
+            second_value_to_send.extend_from_slice(&convert_to_32_byte_array(
                 BigUint::from_str_radix(element_two_str, 10)
                     .unwrap()
                     .to_bytes_le()
                     .as_slice(),
-            );
+            ));
 
             // some sanity tests,
             debug_assert!(
-                BigUint::from_bytes_le(&first_value_to_send).to_string() == element_one_str
+                BigUint::from_bytes_le(first_value_to_send.as_slice()).to_string() == element_one_str
             );
             debug_assert!(
-                BigUint::from_bytes_le(&second_value_to_send).to_string() == element_two_str
+                BigUint::from_bytes_le(second_value_to_send.as_slice()).to_string() == element_two_str
             );
             debug_assert_eq!(first_value_to_send.len(), 32);
             debug_assert_eq!(second_value_to_send.len(), 32);
 
-            self.set_data(&first_value_to_send)?;
-            self.set_data(&second_value_to_send)?;
+            self.set_data(first_value_to_send.as_slice())?;
+            self.set_data(second_value_to_send.as_slice())?;
         }
 
         Ok(())
     }
 
-    pub fn log_api_values(&self) {
-        log::debug!("=== api values ===");
+    pub fn log_api(&self) {
+        log::info!("=== api values ===");
         for api_val in INGO_POSEIDON_ADDR::iter() {
-            self.dclient
-                .ctrl_read_u32(self.dclient.cfg.ctrl_baseaddr, api_val)
-                .unwrap();
+            log::info!(
+                "{:?} value: {:?}",
+                api_val,
+                self.dclient.ctrl_read_u32(self.dclient.cfg.ctrl_baseaddr, api_val).unwrap()
+            );
         }
-        log::debug!("=== api values ===");
+        log::info!("=== api values ===");
+    }
+
+    pub fn log_api_value(&self, api_addrs: &[INGO_POSEIDON_ADDR]) {
+        log::info!("=== api values ===");
+        for api_val in api_addrs {
+            log::info!(
+                "{:?} value: {:?}",
+                api_val,
+                self.dclient.ctrl_read_u32(self.dclient.cfg.ctrl_baseaddr, *api_val).unwrap()
+            );
+        }
+        log::info!("=== api values ===");
     }
 }
 
