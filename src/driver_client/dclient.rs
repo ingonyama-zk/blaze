@@ -11,6 +11,7 @@ use crate::{
     error::*,
     utils::{deserialize_hex, open_channel, AccessFlags},
 };
+use memmap2::Mmap;
 use serde::Deserialize;
 use std::{fmt::Debug, os::unix::fs::FileExt, thread::sleep, time::Duration};
 
@@ -96,7 +97,10 @@ pub struct DriverClient {
     /// Read only channel from core using DMA bus.
     pub dma_c2h_read: std::fs::File,
     /// Read and write file descriptor for working with a register space that uses AXI-lite protocol.
+    #[cfg(not(feature = "qdma"))]
     pub ctrl: std::fs::File,
+    #[cfg(feature = "qdma")]
+    pub ctrl: MmapMut,
 }
 
 impl DriverClient {
@@ -117,12 +121,31 @@ impl DriverClient {
     ///
     /// let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
     /// ```
+    #[cfg(not(feature = "qdma"))]
     pub fn new(id: &str, cfg: DriverConfig) -> Self {
         DriverClient {
             cfg,
             dma_h2c_write: open_channel(&format!("/dev/xdma{}_h2c_0", id), AccessFlags::WrMode),
             dma_c2h_read: open_channel(&format!("/dev/xdma{}_c2h_0", id), AccessFlags::RdMode),
             ctrl: open_channel(&format!("/dev/xdma{}_user", id), AccessFlags::RdwrMode),
+        }
+    }
+
+    #[cfg(feature = "qdma")]
+    pub fn new(bus: &str, device: &str, function: &str, cfg: DriverConfig) -> Self {
+        use memmap2::MmapOptions;
+
+        let device_id = bus + device + function;
+        let mode = "-MM-0";
+
+        let ctrl_fd = open_channel(&format!("'/sys/bus/pci/devices/0000:{}:{}.{}/resource2", bus, device, function), AccessFlags::RdwrMode);
+        let ctrl = unsafe { MmapOptions::new().len(128 * 1024 * 1024).map_mut(&ctrl_fd) };
+
+        DriverClient {
+            cfg,
+            dma_h2c_write: open_channel(&format!("/dev/qdma{}{}", device_id, mode), AccessFlags::WrMode),
+            dma_c2h_read: open_channel(&format!("/dev/qdma{}{}", device_id, mode), AccessFlags::RdMode),
+            ctrl: ctrl.unwrap(),
         }
     }
 
