@@ -11,7 +11,7 @@ use crate::{
     error::*,
     utils::{deserialize_hex, open_channel, AccessFlags},
 };
-use memmap2::Mmap;
+use memmap2::{MmapMut};
 use serde::Deserialize;
 use std::{fmt::Debug, os::unix::fs::FileExt, thread::sleep, time::Duration};
 
@@ -135,7 +135,7 @@ impl DriverClient {
     pub fn new(bus: &str, device: &str, function: &str, cfg: DriverConfig) -> Self {
         use memmap2::MmapOptions;
 
-        let device_id = bus + device + function;
+        let device_id = &format!("{}{}{}", bus, device, function);
         let mode = "-MM-0";
 
         let ctrl_fd = open_channel(&format!("'/sys/bus/pci/devices/0000:{}:{}.{}/resource2", bus, device, function), AccessFlags::RdwrMode);
@@ -159,6 +159,7 @@ impl DriverClient {
     }
 
     /// Setup decouple signal to isolate the user logic during reconfiguration, protecting the shell from spurious signals.
+    #[cfg(not(feature = "qdma"))]
     pub fn set_dfx_decoupling(&self, signal: u8) -> Result<()> {
         self.ctrl
             .write_all_at(
@@ -346,6 +347,7 @@ impl DriverClient {
     ///     FIREWALL_ADDR::STATUS,
     /// );
     /// ```
+    #[cfg(not(feature = "qdma"))]
     pub fn ctrl_read_u32<T: Debug + Into<u64> + Copy>(
         &self,
         base_address: u64,
@@ -372,6 +374,7 @@ impl DriverClient {
     /// * `offset`: an enum which represent the specific offset for given `base_address`.
     ///
     /// returns: u64
+    #[cfg(not(feature = "qdma"))]
     pub fn ctrl_read_u64<T: Debug + Into<u64> + Copy>(
         &self,
         base_address: u64,
@@ -421,6 +424,7 @@ impl DriverClient {
     ///     32,
     /// );
     /// ```
+    #[cfg(not(feature = "qdma"))]
     pub fn ctrl_write_u32<T: Debug + Into<u64> + Copy>(
         &self,
         base_address: u64,
@@ -451,6 +455,7 @@ impl DriverClient {
     /// * `offset`: an enum which represent the specific offset for given `base_address`.
     /// * `data`: a byte slice containing the data to be written.
     ///
+    #[cfg(not(feature = "qdma"))]
     pub fn ctrl_write<T: Debug + Into<u64> + Copy>(
         &self,
         base_address: u64,
