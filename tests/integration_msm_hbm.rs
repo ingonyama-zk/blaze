@@ -44,7 +44,7 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         let hbm_addr: u64 = 0x0;
         let offset: u64 = 0x0;
@@ -152,7 +152,7 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         // log::debug!("writing data to HBM");
         let hbm_addr: u64 = 0x0;

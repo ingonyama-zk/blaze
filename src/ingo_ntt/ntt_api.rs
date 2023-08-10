@@ -34,19 +34,11 @@ impl DriverPrimitive<NTT, NttInit, NTTInput, Vec<u8>> for NTTClient {
         todo!()
     }
 
-    fn reset(&self) -> Result<()> {
-        self.driver_client.set_dfx_decoupling(1)?;
-        self.driver_client.set_dfx_decoupling(0)?;
-        Ok(())
-    }
-
     fn initialize(&self, _: NttInit) -> Result<()> {
         let enable_debug_program = 0x00;
         let debug_program: Vec<u64> = vec![
             0b1111111100000000000000000000000000000000,
             0b1111111100000000000000000000000000000000,
-            // 0b1111111100000000000000000000000000000000,
-            // 0b1111111100000000000000000000000000000000,
         ];
 
         self.driver_client.ctrl_write_u32(

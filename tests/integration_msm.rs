@@ -316,7 +316,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
@@ -405,7 +405,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         },
         dclient,
     );
-    driver.reset()?;
+    driver.driver_client.reset()?;
 
     let params = driver.loaded_binary_parameters();
     let params_parce = MSMImageParametrs::parse_image_params(params[1]);
@@ -501,7 +501,7 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
@@ -590,7 +590,7 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         },
         dclient,
     );
-    driver.reset()?;
+    driver.driver_client.reset()?;
 
     let params = driver.loaded_binary_parameters();
     let params_parce = MSMImageParametrs::parse_image_params(params[1]);

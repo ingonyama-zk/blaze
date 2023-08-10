@@ -1,5 +1,5 @@
 use packed_struct::prelude::PackedStruct;
-use std::{option::Option, thread::sleep, time::Duration};
+use std::option::Option;
 use strum::IntoEnumIterator;
 
 use super::{hash_hw_code::*, TreeMode};
@@ -93,15 +93,8 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         .collect::<Vec<u32>>()
     }
 
-    fn reset(&self) -> Result<()> {
-        self.dclient.set_dfx_decoupling(1)?;
-        self.dclient.set_dfx_decoupling(0)?;
-        sleep(Duration::from_millis(100));
-        Ok(())
-    }
-
     fn initialize(&self, param: PoseidonInitializeParameters) -> Result<()> {
-        self.reset()?;
+        self.dclient.reset()?;
         self.set_initialize_mode(true)?;
 
         self.load_instructions(&param.instruction_path)

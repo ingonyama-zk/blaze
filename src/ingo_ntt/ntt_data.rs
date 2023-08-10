@@ -156,7 +156,8 @@ mod tests {
 
     #[test]
     fn preprocess_correctness() {
-        let exp = already_preprocess();
+        let fdir = env::var("FDIR").unwrap();
+        let exp = already_preprocess(fdir);
         let fname = env::var("FNAME").unwrap();
         let mut f = File::open(&fname).expect("no file found");
         let mut in_vec: Vec<u8> = Default::default();
@@ -170,8 +171,7 @@ mod tests {
         }
     }
 
-    fn already_preprocess() -> Vec<Vec<u8>> {
-        let fdir = env::var("FDIR").unwrap();
+    fn already_preprocess(fdir: String) -> Vec<Vec<u8>> {
         let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
         for _ in 0..NOF_BANKS {
             banks.push(Default::default());
@@ -188,9 +188,9 @@ mod tests {
 
     #[test]
     fn postprocess_correctness() {
+        let fdir = env::var("FDIR").unwrap();
         let fname = env::var("FNAME").unwrap();
-
-        let in_banks: Vec<Vec<u8>> = already_postprocess();
+        let in_banks: Vec<Vec<u8>> = already_postprocess(fdir);
         let ntt_banks = NTTBanks {
             banks: in_banks.try_into().unwrap(),
         };
@@ -207,8 +207,7 @@ mod tests {
         }
     }
 
-    fn already_postprocess() -> Vec<Vec<u8>> {
-        let fdir = env::var("FDIR").unwrap();
+    fn already_postprocess(fdir: String) -> Vec<Vec<u8>> {
         let mut banks: Vec<Vec<u8>> = Vec::with_capacity(NOF_BANKS);
         for _ in 0..NOF_BANKS {
             banks.push(Default::default());

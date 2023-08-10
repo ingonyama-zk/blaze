@@ -35,7 +35,7 @@ fn bench_ntt_calc(c: &mut Criterion) {
             let _ = driver.initialize(NttInit {});
             let _ = driver.start_process(Some(buf_kernel));
             let _ = driver.wait_result();
-            let _ = driver.reset();
+            let _ = driver.driver_client.reset();
         })
     });
     group.finish();

@@ -2,7 +2,7 @@ use super::{msm_cfg::*, msm_hw_code::*};
 use crate::{driver_client::*, error::*};
 
 use packed_struct::prelude::*;
-use std::{os::unix::fs::FileExt, thread::sleep, time::Duration};
+use std::os::unix::fs::FileExt;
 use strum::IntoEnumIterator;
 
 pub struct MSMClient {
@@ -67,13 +67,6 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         })
         .into_iter()
         .collect::<Vec<u32>>()
-    }
-
-    fn reset(&self) -> Result<()> {
-        self.driver_client.set_dfx_decoupling(1)?;
-        self.driver_client.set_dfx_decoupling(0)?;
-        sleep(Duration::from_millis(100));
-        Ok(())
     }
 
     fn initialize(&self, params: MSMParams) -> Result<()> {

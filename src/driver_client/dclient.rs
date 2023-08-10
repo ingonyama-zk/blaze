@@ -31,8 +31,6 @@ pub trait DriverPrimitive<T, P, I, O> {
     /// The `loaded_binary_parameters` method returns
     ///  a vector of 32-bit unsigned integers representing the loaded binary parameters.
     fn loaded_binary_parameters(&self) -> Vec<u32>;
-    /// The `reset` method resets the driver primitive to its initial state.
-    fn reset(&self) -> Result<()>;
 
     /// The `initialize` method initializes the driver primitive with the given parameter.
     fn initialize(&self, param: P) -> Result<()>;
@@ -86,6 +84,13 @@ impl DriverClient {
             ctrl: open_channel(&format!("/dev/xdma{}_user", id), AccessFlags::RdwrMode),
         }
     }
+    /// The `reset` method resets the driver primitive to its initial state.
+    pub fn reset(&self) -> Result<()> {
+        self.set_dfx_decoupling(1)?;
+        self.set_dfx_decoupling(0)?;
+        sleep(Duration::from_millis(100));
+        Ok(())
+    }
 
     // ==== DFX ====
     /// Method for checking decouple status.
@@ -120,11 +125,11 @@ impl DriverClient {
     /// This method setup 27 bit in CONTROL_REG for enabling hbm temperature monitoring.
     pub fn enable_hbm_temp_monitoring(&self) -> Result<()> {
         let ctrl_reg = self.ctrl_read_u32(
-            self.cfg.ctrl_cms_baseaddr + 0x028000,
+            self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_HIF2CPU_CMS_REG_MAP as u64,
             CMS_ADDR::ADDR_HIF2CPU_CMS_CONTROL_REG,
         );
         self.ctrl_write_u32(
-            self.cfg.ctrl_cms_baseaddr + 0x028000,
+            self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_HIF2CPU_CMS_REG_MAP as u64,
             CMS_ADDR::ADDR_HIF2CPU_CMS_CONTROL_REG,
             ctrl_reg.unwrap() | 1 << 27,
         )?;
@@ -133,11 +138,11 @@ impl DriverClient {
 
     pub fn reset_sensor_data(&self) -> Result<()> {
         let ctrl_reg = self.ctrl_read_u32(
-            self.cfg.ctrl_cms_baseaddr + 0x028000,
+            self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_HIF2CPU_CMS_REG_MAP as u64,
             CMS_ADDR::ADDR_HIF2CPU_CMS_CONTROL_REG,
         );
         self.ctrl_write_u32(
-            self.cfg.ctrl_cms_baseaddr + 0x028000,
+            self.cfg.ctrl_cms_baseaddr + CMS_ADDR::ADDR_HIF2CPU_CMS_REG_MAP as u64,
             CMS_ADDR::ADDR_HIF2CPU_CMS_CONTROL_REG,
             ctrl_reg.unwrap() | 1,
         )?;
@@ -225,7 +230,7 @@ impl DriverClient {
         self.set_dfx_decoupling(0)?;
         self.set_firewall_block(self.cfg.ctrl_firewall_baseaddr, false)?;
         self.set_firewall_block(self.cfg.dma_firewall_baseaddr, false)?;
-        
+
         self.ctrl_read_u32(
             self.cfg.ctrl_hbicap_baseaddr,
             HBICAP_ADDR::ADDR_HIF2CPU_HBICAP_ABORT_STATUS,
