@@ -181,9 +181,7 @@ impl DriverClient {
             HBICAP_ADDR::ADDR_HIF2CPU_HBICAP_ABORT_STATUS,
         )?;
 
-        self.set_firewall_block(self.cfg.ctrl_firewall_baseaddr, true)?;
-        self.set_firewall_block(self.cfg.dma_firewall_baseaddr, true)?;
-
+        self.block_firewalls()?;
         Ok(())
     }
 
@@ -228,8 +226,7 @@ impl DriverClient {
             sleep(Duration::from_millis(10));
         }
         self.set_dfx_decoupling(0)?;
-        self.set_firewall_block(self.cfg.ctrl_firewall_baseaddr, false)?;
-        self.set_firewall_block(self.cfg.dma_firewall_baseaddr, false)?;
+        self.unblock_firewalls()?;
 
         self.ctrl_read_u32(
             self.cfg.ctrl_hbicap_baseaddr,
@@ -257,7 +254,7 @@ impl DriverClient {
     /// dclient.set_firewall_block(dclient.cfg.ctrl_firewall_baseaddr, true); // ctrl firewall is now blocked
     /// dclient.set_firewall_block(dclient.cfg.dma_firewall_baseaddr, false); // dma firewall is now unblocked
     /// ```
-    pub fn set_firewall_block(&self, addr: u64, block: bool) -> Result<()> {
+    fn set_firewall_block(&self, addr: u64, block: bool) -> Result<()> {
         if block {
             self.ctrl_write_u32(addr, FIREWALL_ADDR::BLOCK, 0x100_0100)?;
             Ok(())
@@ -268,14 +265,15 @@ impl DriverClient {
         }
     }
 
+    pub fn block_firewalls(&self) -> Result<()> {
+        self.set_firewall_block(self.cfg.ctrl_firewall_baseaddr, true)?;
+        self.set_firewall_block(self.cfg.dma_firewall_baseaddr, true)?;
+        Ok(())
+    }
+
     pub fn unblock_firewalls(&self) -> Result<()> {
         self.set_firewall_block(self.cfg.ctrl_firewall_baseaddr, false)?;
         self.set_firewall_block(self.cfg.dma_firewall_baseaddr, false)?;
-        self.ctrl_write_u32(
-            self.cfg.ctrl_firewall_baseaddr,
-            FIREWALL_ADDR::DISABLE_BLOCK,
-            0,
-        )?;
         Ok(())
     }
 
