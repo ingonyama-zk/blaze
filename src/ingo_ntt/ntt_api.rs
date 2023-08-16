@@ -110,10 +110,10 @@ impl DriverPrimitive<NTT, NttInit, NTTInput, Vec<u8>> for NTTClient {
         Ok(())
     }
 
-    fn result(&self, buf_kernel: Option<usize>) -> Result<Option<Vec<u8>>> {
+    fn result(&self, buf_num: Option<usize>) -> Result<Option<Vec<u8>>> {
         let mut res_banks: NTTBanks = Default::default();
         for i in 0..NOF_BANKS {
-            let offset = self.ntt_cfg.ntt_bank_start_addr(i, buf_kernel.unwrap());
+            let offset = self.ntt_cfg.ntt_bank_start_addr(i, buf_num.unwrap());
             res_banks.banks[i] = vec![0; NTTConfig::NTT_BUFFER_SIZE];
             self.driver_client.dma_read(
                 self.driver_client.cfg.dma_baseaddr,

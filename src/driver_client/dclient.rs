@@ -118,7 +118,8 @@ impl DriverClient {
             CMS_ADDR::ADDR_CPU2HIF_CMS_INITIALIZE,
             1,
         )?;
-        sleep(Duration::from_millis(200));
+        // Required for FPGA. In plan: replace with checking register loop
+        sleep(Duration::from_millis(10));
         Ok(())
     }
 
@@ -223,7 +224,7 @@ impl DriverClient {
         )?;
         self.dma_write(self.cfg.dma_hbicap_baseaddr, DMA_RW::OFFSET, binary)?;
         while !self.is_hbicap_ready() {
-            sleep(Duration::from_millis(10));
+            continue;
         }
         self.set_dfx_decoupling(0)?;
         self.unblock_firewalls()?;
