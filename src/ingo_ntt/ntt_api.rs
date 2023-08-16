@@ -36,10 +36,7 @@ impl DriverPrimitive<NTT, NttInit, NTTInput, Vec<u8>> for NTTClient {
 
     fn initialize(&self, _: NttInit) -> Result<()> {
         let enable_debug_program = 0x00;
-        let debug_program: Vec<u64> = vec![
-            0b1111111100000000000000000000000000000000,
-            0b1111111100000000000000000000000000000000,
-        ];
+        let debug_program: Vec<u64> = vec![0xFF00000000, 0xFF00000000];
 
         self.driver_client.ctrl_write_u32(
             self.ntt_cfg.ntt_addrs.hbm_ss_baseaddr,

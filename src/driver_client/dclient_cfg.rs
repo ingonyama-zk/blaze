@@ -1,5 +1,5 @@
 pub enum CardType {
-    U250,
+    C1100,
 }
 
 /// The [`DriverConfig`] is a struct that defines a set of 64-bit unsigned integer (`u64`)
@@ -26,12 +26,12 @@ impl DriverConfig {
     /// Create a new driver config.
     pub fn driver_client_cfg(card_type: CardType) -> Self {
         match card_type {
-            CardType::U250 => u250_cfg(),
+            CardType::C1100 => c1100_cfg(),
         }
     }
 }
 
-fn u250_cfg() -> DriverConfig {
+fn c1100_cfg() -> DriverConfig {
     DriverConfig {
         ctrl_baseaddr: 0x00000000,
         ctrl_cms_baseaddr: 0x04000000,

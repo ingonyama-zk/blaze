@@ -36,7 +36,10 @@ pub(super) struct NTTConfig {
 }
 
 impl NTTConfig {
-    pub const NTT_BUFFER_SIZE: usize = 268435456; // ntt_buffer_size = 2**29 // 2
+    // In essence, the HBM is subdivided into two rows and two columns.
+    // The two rows account for the HBM double buffer and
+    // the two columns account for the left and right NTTC sides.
+    pub const NTT_BUFFER_SIZE: usize = 268435456; // 2**28 - size of one buffer into HBM
 
     pub fn ntt_cfg() -> Self {
         NTTConfig {
@@ -59,10 +62,15 @@ pub(super) struct NTTBanks {
 }
 
 impl NTTBanks {
-    const NTT_SIZE: usize = 134217728; // 2**27
-    const NTT_WORD_SIZE: usize = 32;
-    const NTT_NOF_MMU_IN_CORE: usize = 8;
+    const NTT_SIZE: usize = 134217728; // Size of NTT = 2**27
+    const NTT_WORD_SIZE: usize = 32; // Size of one element in NTT in bytes
+    const NTT_NOF_MMU_IN_CORE: usize = 8; // Number of MMUs into which one subNTT splits into
 
+    // The NTT data (corresponding to a single buffer) consists of 512 Groups (NTT_NOF_GROUPS),
+    // each Group consisting of two Slices (NTT_NOF_SLICE),
+    // each Slice consisting of 16 Batches (NTT_NOF_BATCH),
+    // and each Batch consisting of 16 subNTTs (NTT_NOF_SUBNTT),
+    // each subNTTs consisting of 64 rows (NTT_NOF_ROW).
     const NTT_NOF_GROUPS: usize = 512;
     const NTT_NOF_SLICE: usize = 2;
     const NTT_NOF_BATCH: usize = 16;

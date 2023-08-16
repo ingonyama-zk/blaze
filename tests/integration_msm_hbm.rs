@@ -35,7 +35,7 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
         let driver = MSMClient::new(
             MSMInit {
                 mem_type: PointMemoryType::DMA,
@@ -143,7 +143,7 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
         let driver = MSMClient::new(
             MSMInit {
                 mem_type: PointMemoryType::HBM,

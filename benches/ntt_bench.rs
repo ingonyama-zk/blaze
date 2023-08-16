@@ -16,7 +16,7 @@ fn bench_ntt_calc(c: &mut Criterion) {
     let buf_kernel = 0;
 
     info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     let driver = NTTClient::new(NTT::Ntt, dclient);
     log::info!("Starting set NTT data");
     let _ = driver.set_data(NTTInput {

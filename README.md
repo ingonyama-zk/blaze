@@ -23,7 +23,7 @@ On the connection side, we can provide an API to retrieve any necessary data (in
 
 ### DriverClient
 
-The [DriverClient](src/driver_client/) module is designed to establish a connection between the FPGA/AWS and a known type of card, such as the U250 card. It does not possess any knowledge about primitives.
+The [DriverClient](src/driver_client/) module is designed to establish a connection between the FPGA/AWS and a known type of card, such as the C1100 card. It does not possess any knowledge about primitives.
 
 The [DriverClient](src/driver_client/) provides basic IO methods and can load a binary, as well as provide specific and debug information about current HW. For a specific card type, the [DriverConfig](src/driver_client/dclient.rs) remains the same and can be accessed using the `driver_client_cfg` function.
 
@@ -33,7 +33,7 @@ How to create a new connection:
 
 ```rust
 let dclient = DriverClient::new(&id,
-DriverConfig::driver_client_cfg(CardType::U250));
+DriverConfig::driver_client_cfg(CardType::C1100));
 ```
 
 ### DriverPrimitive
@@ -45,7 +45,7 @@ The configuration (e.g. for msm there are addresses space and curve description)
 To create a new primitive instance for MSM, for example, one would use the following code:
 
 ```rust
-let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
 let driver = MSMClient::new(
     MSMInit {
         mem_type: PointMemoryType::DMA,
@@ -65,7 +65,7 @@ For data encapsulation, methods specific to each primitive can be divided into p
 We will refer to any type of primitive as `DriverPrimitiveClient` to show generality.
 
 ```rust
- let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+ let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
  let driver = DriverPrimitiveClient::new(dpc_type, dclient);
 
  let _ = driver.initialize(dpc_param);
@@ -120,7 +120,7 @@ This module implements the calculation of NTT of size `2^27`. To use it, the inp
 It is worth noting that the data transfer process is slightly different from other modules. The following is an example of how to use NTT. More details can be found here: [LINK TO BLOG]
 
 ```rust
-let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
 let driver = NTTClient::new(NTT::Ntt, dclient);
 let buf_host = 0;
 let buf_kernel = 0;

@@ -21,7 +21,7 @@ fn ntt_test_correctness() -> Result<(), Box<dyn Error>> {
     let buf_kernel = 0;
 
     info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     if std::env::var("BIN").is_ok() {
         let bin_fname = std::env::var("BIN").unwrap();
         info!("Start reading binary");
@@ -85,7 +85,7 @@ fn ntt_parallel_test_correctness() -> Result<(), Box<dyn Error>> {
     }
 
     info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     if std::env::var("BIN").is_ok() {
         let bin_fname = std::env::var("BIN").unwrap();
         info!("Start reading binary");

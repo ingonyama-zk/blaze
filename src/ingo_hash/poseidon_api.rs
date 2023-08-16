@@ -291,7 +291,7 @@ mod tests {
 
         info!("Create Driver API instance");
 
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::U250));
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
         let driver: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
         let params = driver.loaded_binary_parameters();
         info!("Driver parameters: [{:?}, {:032b}]", params[0], params[1]);

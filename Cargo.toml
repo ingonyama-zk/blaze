@@ -5,7 +5,7 @@ edition = "2021"
 homepage = "https://www.ingonyama.com"
 name = "ingo-blaze"
 repository = "https://github.com/ingonyama-zk/blaze"
-version = "0.3.0"
+version = "0.4.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

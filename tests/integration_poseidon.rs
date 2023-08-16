@@ -30,7 +30,7 @@ const ONE: u32 = 1;
 fn test_sanity_check() {
     let instruction_path = get_instruction_path();
 
-    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     let poseidon: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
 
     poseidon.dclient.reset().expect_err("Failed while reset");
@@ -62,7 +62,7 @@ fn test_build_small_tree_par() {
 
     env_logger::try_init().expect("Invalid logger initialization");
 
-    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     let poseidon: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
 
     let poseidon = Arc::new(Mutex::new(poseidon));
@@ -125,7 +125,7 @@ fn test_build_small_tree() {
 
     env_logger::try_init().expect("Invalid logger initialization");
 
-    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     let poseidon: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
 
     let params = PoseidonInitializeParameters {

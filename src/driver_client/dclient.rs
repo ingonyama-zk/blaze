@@ -74,7 +74,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::shell_api::{DriverClient, DriverConfig};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     /// ```
     pub fn new(id: &str, cfg: DriverConfig) -> Self {
         DriverClient {
@@ -200,7 +200,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     ///
     /// // read binary data from given filename
     /// let buf = utils::read_binary_file(&filename);
@@ -251,7 +251,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::shell_api::DriverClient;
     ///
-    /// let dclient = DriverConfig::driver_client_cfg(CardType::U250);
+    /// let dclient = DriverConfig::driver_client_cfg(CardType::C1100);
     /// dclient.set_firewall_block(dclient.cfg.ctrl_firewall_baseaddr, true); // ctrl firewall is now blocked
     /// dclient.set_firewall_block(dclient.cfg.dma_firewall_baseaddr, false); // dma firewall is now unblocked
     /// ```
@@ -293,7 +293,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     ///
     /// let ret = dclient.ctrl_read_u32(
     ///     dclient.cfg.ctrl_firewall_baseaddr,
@@ -367,7 +367,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     ///    
     /// dclient.ctrl_write_u32(
     ///     dclient.cfg.ctrl_hbicap_baseaddr,
@@ -444,7 +444,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     /// let size_of_input = 16;
     /// let readen = dclient.dma_read(
     ///     dclient.cfg.dma_baseaddr,
@@ -487,7 +487,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     /// let input = vec![1, 2, 3, 4, 5, 6, 7, 8];
     /// let chunk_size = 4;
     ///
@@ -533,7 +533,7 @@ impl DriverClient {
     /// ```rust
     /// use ingo_blaze::shell::{shell_api::DriverClient, shell_hw_code::*};
     ///
-    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
+    /// let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     /// let input = vec![1, 2, 3, 4, 5, 6, 7, 8];
     /// let chunk_size = 4;
     ///
