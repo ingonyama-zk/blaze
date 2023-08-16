@@ -70,13 +70,15 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
+
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.wait_result()?;
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
@@ -125,13 +127,14 @@ fn msm_bls12_377_test() -> Result<(), Box<dyn std::error::Error>> {
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.wait_result()?;
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
@@ -180,13 +183,14 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.driver_client.firewalls_status();
     driver.task_label()?;
     log::info!("Waiting MSM result: ");
@@ -238,13 +242,14 @@ fn msm_bn254_test() -> Result<(), Box<dyn std::error::Error>> {
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.wait_result()?;
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
@@ -311,7 +316,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
@@ -323,7 +328,8 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             nof_elements: msm_size as u32,
             hbm_point_addr: None,
         };
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
 
         driver.driver_client.firewalls_status();
 
@@ -331,11 +337,11 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(MSMInput {
+        driver.set_data(MSMInput {
             points: Some(points_to_run),
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
 
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
@@ -399,7 +405,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         },
         dclient,
     );
-    driver.reset()?;
+    driver.driver_client.reset()?;
 
     let params = driver.loaded_binary_parameters();
     let params_parce = MSMImageParametrs::parse_image_params(params[1]);
@@ -414,7 +420,8 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
 
     driver.driver_client.firewalls_status();
     driver.task_label()?;
@@ -424,11 +431,11 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start");
     let start_set_data = Instant::now();
     let start_full = Instant::now();
-    let _ = driver.set_data(MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     let dur_set = start_set_data.elapsed();
 
     let start_wait = Instant::now();
@@ -494,7 +501,7 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
@@ -506,7 +513,8 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             nof_elements: msm_size as u32,
             hbm_point_addr: None,
         };
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
 
         driver.driver_client.firewalls_status();
 
@@ -514,11 +522,11 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(MSMInput {
+        driver.set_data(MSMInput {
             points: Some(points_to_run),
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
         // driver.get_api();
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
@@ -582,7 +590,7 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         },
         dclient,
     );
-    driver.reset()?;
+    driver.driver_client.reset()?;
 
     let params = driver.loaded_binary_parameters();
     let params_parce = MSMImageParametrs::parse_image_params(params[1]);
@@ -597,7 +605,8 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
 
     driver.driver_client.firewalls_status();
     driver.task_label()?;
@@ -607,11 +616,11 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start");
     let start_set_data = Instant::now();
     let start_full = Instant::now();
-    let _ = driver.set_data(MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     let dur_set = start_set_data.elapsed();
 
     let start_wait = Instant::now();

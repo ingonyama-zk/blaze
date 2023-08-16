@@ -33,7 +33,7 @@ fn test_sanity_check() {
     let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::U250));
     let poseidon: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
 
-    poseidon.reset().expect_err("Failed while reset");
+    poseidon.dclient.reset().expect_err("Failed while reset");
     let params = poseidon.loaded_binary_parameters();
     info!("Driver parameters: [{:?}, {:032b}]", params[0], params[1]);
 

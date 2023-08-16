@@ -44,7 +44,7 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         let hbm_addr: u64 = 0x0;
         let offset: u64 = 0x0;
@@ -66,18 +66,19 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
             hbm_point_addr: Some((hbm_addr, offset)),
         };
 
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to calculate MSM: ");
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(MSMInput {
+        driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
         driver.get_api();
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
@@ -151,7 +152,7 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         // log::debug!("writing data to HBM");
         let hbm_addr: u64 = 0x0;
@@ -174,18 +175,19 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
             hbm_point_addr: Some((hbm_addr, offset)),
         };
 
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to calculate MSM: ");
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(MSMInput {
+        driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
         driver.driver_client.firewalls_status();

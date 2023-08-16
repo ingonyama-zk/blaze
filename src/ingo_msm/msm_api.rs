@@ -2,7 +2,7 @@ use super::{msm_cfg::*, msm_hw_code::*};
 use crate::{driver_client::*, error::*};
 
 use packed_struct::prelude::*;
-use std::{os::unix::fs::FileExt, thread::sleep, time::Duration};
+use std::os::unix::fs::FileExt;
 use strum::IntoEnumIterator;
 
 pub struct MSMClient {
@@ -69,13 +69,6 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         .collect::<Vec<u32>>()
     }
 
-    fn reset(&self) -> Result<()> {
-        self.driver_client.set_dfx_decoupling(1)?;
-        self.driver_client.set_dfx_decoupling(0)?;
-        sleep(Duration::from_millis(100));
-        Ok(())
-    }
-
     fn initialize(&self, params: MSMParams) -> Result<()> {
         log::info!("Start initialize driver");
 
@@ -114,14 +107,16 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
             params.nof_elements,
         )?;
 
+        Ok(())
+    }
+
+    fn start_process(&self, _param: Option<usize>) -> Result<()> {
         log::info!("Pushing Task Signal");
         self.driver_client.ctrl_write_u32(
             self.driver_client.cfg.ctrl_baseaddr,
             INGO_MSM_ADDR::ADDR_CPU2HIF_E_PUSH_MSM_TASK_TO_QUEUE,
             1,
-        )?;
-
-        Ok(())
+        )
     }
 
     /// This function sets data for compute MSM and has three different cases depending on the input parameters.
@@ -317,12 +312,13 @@ impl MSMClient {
         Ok(())
     }
 
-    pub fn get_data_from_hbm(&self, data: &[u8], addr: u64, offset: u64) -> Result<Vec<u8>> {
+    pub fn get_data_from_hbm(&self, data_len: usize, addr: u64, offset: u64) -> Result<Vec<u8>> {
         log::debug!("HBM adress: {:#X?}", addr);
-        log::debug!("Data length: {:#X?}", data.len());
-        let res = self.driver_client.dma_read(addr, offset, data.len());
+        log::debug!("Data length: {:#X?}", data_len);
+        let mut res = vec![0; data_len];
+        self.driver_client.dma_read(addr, offset, &mut res)?;
         log::debug!("Successfully read data from hbm");
-        res
+        Ok(res)
     }
 
     pub fn get_api(&self) {
