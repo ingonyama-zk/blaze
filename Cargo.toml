@@ -1,40 +1,38 @@
 [package]
-name = "ingo-blaze"
-version = "0.3.0"
-edition = "2021"
-authors = [ "Ingonyama" ]
+authors = ["Ingonyama"]
 description = "Library for ZK acceleration on Xilinx FPGAs."
+edition = "2021"
 homepage = "https://www.ingonyama.com"
+name = "ingo-blaze"
 repository = "https://github.com/ingonyama-zk/blaze"
+version = "0.4.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libc = "0.2.126"
-ark-algebra-intro = "0.3.0"
-ark-ec = "0.3.0"
-ark-std = "0.3.0"
-ark-ff = "0.3.0"
-ark-bls12-377 = "0.3.0"
-ark-bn254 = "0.3.0"
-ark-bls12-381 = "0.3.0"
-env_logger = "0.10.0"
-log = "0.4.0"
-packed_struct = "0.10"
 anyhow = "1.0.68"
-csv = "1.1"
-serde = { version = "1", features = ["derive"] }
-num = "0.4"
-strum = "0.24"
-strum_macros = "0.24"
-rand = "0.8.5"
+ark-bls12-377 = "0.3.0"
+ark-bls12-381 = "0.3.0"
+ark-bn254 = "0.3.0"
+ark-ec = "0.3.0"
+ark-ff = "0.3.0"
+ark-std = "0.3.0"
 criterion = "0.4.0"
-lazy_static = "1.4.0"
-bindgen = "0.64.0"
+csv = "1.1"
 dotenv = "0.15.0"
-rayon = "1.6.1"
-serde_json = { version = "1.0" }
-serde-hex = "0.1.0"
-thiserror = "1.0"
+env_logger = "0.10.0"
+libc = "0.2.126"
+log = "0.4.0"
+num = "0.4"
 num-bigint = "0.4"
 num-traits = "0.2.15"
+packed_struct = "0.10"
+rand = "0.8.5"
+rayon = "1.6.1"
+strum = "0.24"
+strum_macros = "0.24"
+thiserror = "1.0"
+
+[[bench]]
+harness = false
+name = "ntt_bench"

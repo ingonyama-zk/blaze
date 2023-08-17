@@ -1,4 +1,4 @@
-use ingo_blaze::{driver_client::dclient::*, ingo_msm::*, utils::*};
+use ingo_blaze::{driver_client::*, ingo_msm::*, utils::*};
 use num_traits::Pow;
 use std::{
     env,
@@ -24,12 +24,12 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     log::info!("MSM Size: {}", msm_size);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-    let driver = msm_api::MSMClient::new(
-        msm_api::MSMInit {
-            mem_type: msm_api::PointMemoryType::DMA,
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let driver = MSMClient::new(
+        MSMInit {
+            mem_type: PointMemoryType::DMA,
             is_precompute: false,
-            curve: msm_api::Curve::BLS381,
+            curve: Curve::BLS381,
         },
         dclient,
     );
@@ -54,7 +54,7 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
         params[0],
         params[1].reverse_bits()
     );
-    let params_parce = msm_api::MSMImageParametrs::parse_image_params(params[1]);
+    let params_parce = MSMImageParametrs::parse_image_params(params[1]);
     params_parce.debug_information();
 
     log::info!("Checking MSM core is ready: ");
@@ -62,30 +62,28 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     driver.task_label()?;
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
+        msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Starting to initialize task and set number of elements: ");
-    let msm_params = msm_api::MSMParams {
+    let msm_params = MSMParams {
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
+
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(msm_api::MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.wait_result()?;
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
         msm::result_check_bls12_381(mres.result, msm_result, results, msm_size as usize);
-    log::info!(
-        "Is point on the {:?} curve {}",
-        msm_api::Curve::BLS377,
-        is_on_curve
-    );
+    log::info!("Is point on the {:?} curve {}", Curve::BLS377, is_on_curve);
     log::info!("Is Result Equal To Expected {}", is_eq);
     assert!(is_on_curve);
     assert!(is_eq);
@@ -103,48 +101,45 @@ fn msm_bls12_377_test() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-    let driver = msm_api::MSMClient::new(
-        msm_api::MSMInit {
-            mem_type: msm_api::PointMemoryType::DMA,
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let driver = MSMClient::new(
+        MSMInit {
+            mem_type: PointMemoryType::DMA,
             is_precompute: false,
-            curve: msm_api::Curve::BLS377,
+            curve: Curve::BLS377,
         },
         dclient,
     );
 
     let params = driver.loaded_binary_parameters();
-    let params_parce = msm_api::MSMImageParametrs::parse_image_params(params[1]);
+    let params_parce = MSMImageParametrs::parse_image_params(params[1]);
     params_parce.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
     driver.task_label()?;
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_377(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
+        msm::input_generator_bls12_377(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Starting to initialize task and set number of elements: ");
-    let msm_params = msm_api::MSMParams {
+    let msm_params = MSMParams {
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(msm_api::MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.wait_result()?;
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
         msm::result_check_bls12_377(mres.result, msm_result, results, msm_size as usize);
-    log::info!(
-        "Is point on the {:?} curve {}",
-        msm_api::Curve::BLS377,
-        is_on_curve
-    );
+    log::info!("Is point on the {:?} curve {}", Curve::BLS377, is_on_curve);
     log::info!("Is Result Equal To Expected {}", is_eq);
     assert!(is_on_curve);
     assert!(is_eq);
@@ -161,21 +156,21 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
+        msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-    let driver = msm_api::MSMClient::new(
-        msm_api::MSMInit {
-            mem_type: msm_api::PointMemoryType::DMA,
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let driver = MSMClient::new(
+        MSMInit {
+            mem_type: PointMemoryType::DMA,
             is_precompute: false,
-            curve: msm_api::Curve::BLS381,
+            curve: Curve::BLS381,
         },
         dclient,
     );
 
     let params = driver.loaded_binary_parameters();
-    let params_parce = msm_api::MSMImageParametrs::parse_image_params(params[1]);
+    let params_parce = MSMImageParametrs::parse_image_params(params[1]);
     params_parce.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
@@ -183,18 +178,19 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
     driver.driver_client.firewalls_status();
 
     log::info!("Starting to initialize task and set number of elements: ");
-    let msm_params = msm_api::MSMParams {
+    let msm_params = MSMParams {
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(msm_api::MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.driver_client.firewalls_status();
     driver.task_label()?;
     log::info!("Waiting MSM result: ");
@@ -202,11 +198,7 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
         msm::result_check_bls12_381(mres.result, msm_result, results, msm_size as usize);
-    log::info!(
-        "Is point on the {:?} curve {}",
-        msm_api::Curve::BLS381,
-        is_on_curve
-    );
+    log::info!("Is point on the {:?} curve {}", Curve::BLS381, is_on_curve);
     log::info!("Is Result Equal To Expected {}", is_eq);
     assert!(is_on_curve);
     assert!(is_eq);
@@ -224,48 +216,45 @@ fn msm_bn254_test() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-    let driver = msm_api::MSMClient::new(
-        msm_api::MSMInit {
-            mem_type: msm_api::PointMemoryType::DMA,
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let driver = MSMClient::new(
+        MSMInit {
+            mem_type: PointMemoryType::DMA,
             is_precompute: false,
-            curve: msm_api::Curve::BN254,
+            curve: Curve::BN254,
         },
         dclient,
     );
 
     let params = driver.loaded_binary_parameters();
-    let params_parce = msm_api::MSMImageParametrs::parse_image_params(params[1]);
+    let params_parce = MSMImageParametrs::parse_image_params(params[1]);
     params_parce.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
     driver.task_label()?;
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bn254(msm_size as usize, msm_api::PRECOMPUTE_FACTOR_BASE);
+        msm::input_generator_bn254(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Starting to initialize task and set number of elements: ");
-    let msm_params = msm_api::MSMParams {
+    let msm_params = MSMParams {
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
 
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
     log::info!("Starting to calculate MSM: ");
-    let _ = driver.set_data(msm_api::MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     driver.wait_result()?;
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
         msm::result_check_bn254(mres.result, msm_result, results, msm_size as usize);
-    log::info!(
-        "Is point on the {:?} curve {}",
-        msm_api::Curve::BN254,
-        is_on_curve
-    );
+    log::info!("Is point on the {:?} curve {}", Curve::BN254, is_on_curve);
     log::info!("Is Result Equal To Expected {}", is_eq);
     assert!(is_on_curve);
     assert!(is_eq);
@@ -302,10 +291,8 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) = msm::input_generator_bls12_377(
-        Pow::pow(base, max_exp) as usize,
-        msm_api::PRECOMPUTE_FACTOR,
-    );
+    let (points, scalars, _, results) =
+        msm::input_generator_bls12_377(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 
@@ -313,24 +300,23 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
     for iter in low_exp..=max_exp {
         let msm_size = Pow::pow(base, iter) as usize;
         log::debug!("MSM size: {}", msm_size);
-        let mut points_to_run = vec![0; msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize];
+        let mut points_to_run = vec![0; msm_size * 96 * PRECOMPUTE_FACTOR as usize];
         let mut scalars_to_run = vec![0; msm_size * 32];
 
-        points_to_run
-            .copy_from_slice(&points[0..msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize]);
+        points_to_run.copy_from_slice(&points[0..msm_size * 96 * PRECOMPUTE_FACTOR as usize]);
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-        let driver = msm_api::MSMClient::new(
-            msm_api::MSMInit {
-                mem_type: msm_api::PointMemoryType::DMA,
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+        let driver = MSMClient::new(
+            MSMInit {
+                mem_type: PointMemoryType::DMA,
                 is_precompute: true,
-                curve: msm_api::Curve::BLS377,
+                curve: Curve::BLS377,
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
@@ -338,11 +324,12 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to initialize task and set number of elements: ");
-        let msm_params = msm_api::MSMParams {
+        let msm_params = MSMParams {
             nof_elements: msm_size as u32,
             hbm_point_addr: None,
         };
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
 
         driver.driver_client.firewalls_status();
 
@@ -350,11 +337,11 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(msm_api::MSMInput {
+        driver.set_data(MSMInput {
             points: Some(points_to_run),
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
 
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
@@ -404,24 +391,24 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start to generate test data");
     let start_gen = Instant::now();
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_377(msm_size as usize, msm_api::PRECOMPUTE_FACTOR);
+        msm::input_generator_bls12_377(msm_size as usize, PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-    let driver = msm_api::MSMClient::new(
-        msm_api::MSMInit {
-            mem_type: msm_api::PointMemoryType::DMA,
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let driver = MSMClient::new(
+        MSMInit {
+            mem_type: PointMemoryType::DMA,
             is_precompute: true,
-            curve: msm_api::Curve::BLS377,
+            curve: Curve::BLS377,
         },
         dclient,
     );
-    driver.reset()?;
+    driver.driver_client.reset()?;
 
     let params = driver.loaded_binary_parameters();
-    let params_parce = msm_api::MSMImageParametrs::parse_image_params(params[1]);
+    let params_parce = MSMImageParametrs::parse_image_params(params[1]);
     params_parce.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
@@ -429,11 +416,12 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     driver.driver_client.firewalls_status();
 
     log::info!("Starting to initialize task and set number of elements: ");
-    let msm_params = msm_api::MSMParams {
+    let msm_params = MSMParams {
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
 
     driver.driver_client.firewalls_status();
     driver.task_label()?;
@@ -443,11 +431,11 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start");
     let start_set_data = Instant::now();
     let start_full = Instant::now();
-    let _ = driver.set_data(msm_api::MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     let dur_set = start_set_data.elapsed();
 
     let start_wait = Instant::now();
@@ -488,10 +476,8 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) = msm::input_generator_bls12_381(
-        Pow::pow(base, max_exp) as usize,
-        msm_api::PRECOMPUTE_FACTOR,
-    );
+    let (points, scalars, _, results) =
+        msm::input_generator_bls12_381(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 
@@ -499,24 +485,23 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
     for iter in low_exp..=max_exp {
         let msm_size = Pow::pow(base, iter) as usize;
         log::debug!("MSM size: {}", msm_size);
-        let mut points_to_run = vec![0; msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize];
+        let mut points_to_run = vec![0; msm_size * 96 * PRECOMPUTE_FACTOR as usize];
         let mut scalars_to_run = vec![0; msm_size * 32];
 
-        points_to_run
-            .copy_from_slice(&points[0..msm_size * 96 * msm_api::PRECOMPUTE_FACTOR as usize]);
+        points_to_run.copy_from_slice(&points[0..msm_size * 96 * PRECOMPUTE_FACTOR as usize]);
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-        let driver = msm_api::MSMClient::new(
-            msm_api::MSMInit {
-                mem_type: msm_api::PointMemoryType::DMA,
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+        let driver = MSMClient::new(
+            MSMInit {
+                mem_type: PointMemoryType::DMA,
                 is_precompute: true,
-                curve: msm_api::Curve::BLS381,
+                curve: Curve::BLS381,
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
@@ -524,11 +509,12 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         // driver.driver_client.firewalls_status();
 
         log::info!("Starting to initialize task and set number of elements: ");
-        let msm_params = msm_api::MSMParams {
+        let msm_params = MSMParams {
             nof_elements: msm_size as u32,
             hbm_point_addr: None,
         };
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
 
         driver.driver_client.firewalls_status();
 
@@ -536,11 +522,11 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(msm_api::MSMInput {
+        driver.set_data(MSMInput {
             points: Some(points_to_run),
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
         // driver.get_api();
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
@@ -590,24 +576,24 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start to generate test data");
     let start_gen = Instant::now();
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, msm_api::PRECOMPUTE_FACTOR);
+        msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
 
     log::info!("Create Driver API instance");
-    let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-    let driver = msm_api::MSMClient::new(
-        msm_api::MSMInit {
-            mem_type: msm_api::PointMemoryType::DMA,
+    let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+    let driver = MSMClient::new(
+        MSMInit {
+            mem_type: PointMemoryType::DMA,
             is_precompute: true,
-            curve: msm_api::Curve::BLS381,
+            curve: Curve::BLS381,
         },
         dclient,
     );
-    driver.reset()?;
+    driver.driver_client.reset()?;
 
     let params = driver.loaded_binary_parameters();
-    let params_parce = msm_api::MSMImageParametrs::parse_image_params(params[1]);
+    let params_parce = MSMImageParametrs::parse_image_params(params[1]);
     params_parce.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
@@ -615,11 +601,12 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     driver.driver_client.firewalls_status();
 
     log::info!("Starting to initialize task and set number of elements: ");
-    let msm_params = msm_api::MSMParams {
+    let msm_params = MSMParams {
         nof_elements: msm_size,
         hbm_point_addr: None,
     };
-    let _ = driver.initialize(msm_params);
+    driver.initialize(msm_params)?;
+    driver.start_process(None)?;
 
     driver.driver_client.firewalls_status();
     driver.task_label()?;
@@ -629,11 +616,11 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start");
     let start_set_data = Instant::now();
     let start_full = Instant::now();
-    let _ = driver.set_data(msm_api::MSMInput {
+    driver.set_data(MSMInput {
         points: Some(points),
         scalars,
         params: msm_params,
-    });
+    })?;
     let dur_set = start_set_data.elapsed();
 
     let start_wait = Instant::now();

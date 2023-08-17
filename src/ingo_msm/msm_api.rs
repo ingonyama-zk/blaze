@@ -1,54 +1,9 @@
-use crate::{
-    driver_client::dclient::*, driver_client::dclient_code::*, error::*, ingo_msm::msm_hw_code::*,
-    utils::deserialize_option_hex,
-};
+use super::{msm_cfg::*, msm_hw_code::*};
+use crate::{driver_client::*, error::*};
 
 use packed_struct::prelude::*;
-use serde::Deserialize;
-use std::{os::unix::fs::FileExt, thread::sleep, time::Duration};
-
+use std::os::unix::fs::FileExt;
 use strum::IntoEnumIterator;
-use strum_macros::EnumString;
-
-#[derive(Debug, EnumString, PartialEq)]
-pub enum Curve {
-    BLS377,
-    BLS381,
-    BN254,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, EnumString)]
-pub enum PointMemoryType {
-    HBM,
-    DMA,
-}
-
-#[derive(Deserialize, Debug, Copy, Clone)]
-struct MSMConfig {
-    // The size characteristic in points and scalars in a curve.
-    /// The size in bytes of result point. The point is expected to be in projective form.
-    result_point_size: usize,
-    /// The size of one point in bytes. Point is represented in affine form.
-    point_size: Option<usize>,
-    /// The size of scalar coordinate in bytes.
-    scalar_size: usize,
-
-    // Ingo MSM Core additional addresses
-    #[serde(default, deserialize_with = "deserialize_option_hex")]
-    dma_scalars_addr: Option<u64>,
-    #[serde(default, deserialize_with = "deserialize_option_hex")]
-    dma_points_addr: Option<u64>,
-}
-
-impl MSMConfig {
-    fn load_cfg(curve: Curve, mem: PointMemoryType) -> Self {
-        let name = format!("configs/msm_{:?}_{:?}_cfg.json", curve, mem).to_ascii_lowercase();
-        log::info!("Config name: {}", name);
-        let file = std::fs::File::open(name).expect("");
-        let reader = std::io::BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
-    }
-}
 
 pub struct MSMClient {
     mem_type: PointMemoryType,
@@ -94,7 +49,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
             } else {
                 PRECOMPUTE_FACTOR_BASE
             },
-            msm_cfg: MSMConfig::load_cfg(init.curve, init.mem_type),
+            msm_cfg: MSMConfig::msm_cfg(init.curve, init.mem_type),
             driver_client: dclient,
         }
     }
@@ -112,13 +67,6 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         })
         .into_iter()
         .collect::<Vec<u32>>()
-    }
-
-    fn reset(&self) -> Result<()> {
-        self.driver_client.set_dfx_decoupling(1)?;
-        self.driver_client.set_dfx_decoupling(0)?;
-        sleep(Duration::from_millis(100));
-        Ok(())
     }
 
     fn initialize(&self, params: MSMParams) -> Result<()> {
@@ -159,14 +107,16 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
             params.nof_elements,
         )?;
 
+        Ok(())
+    }
+
+    fn start_process(&self, _param: Option<usize>) -> Result<()> {
         log::info!("Pushing Task Signal");
         self.driver_client.ctrl_write_u32(
             self.driver_client.cfg.ctrl_baseaddr,
             INGO_MSM_ADDR::ADDR_CPU2HIF_E_PUSH_MSM_TASK_TO_QUEUE,
             1,
-        )?;
-
-        Ok(())
+        )
     }
 
     /// This function sets data for compute MSM and has three different cases depending on the input parameters.
@@ -362,12 +312,13 @@ impl MSMClient {
         Ok(())
     }
 
-    pub fn get_data_from_hbm(&self, data: &[u8], addr: u64, offset: u64) -> Result<Vec<u8>> {
+    pub fn get_data_from_hbm(&self, data_len: usize, addr: u64, offset: u64) -> Result<Vec<u8>> {
         log::debug!("HBM adress: {:#X?}", addr);
-        log::debug!("Data length: {:#X?}", data.len());
-        let res = self.driver_client.dma_read(addr, offset, data.len());
+        log::debug!("Data length: {:#X?}", data_len);
+        let mut res = vec![0; data_len];
+        self.driver_client.dma_read(addr, offset, &mut res)?;
         log::debug!("Successfully read data from hbm");
-        res
+        Ok(res)
     }
 
     pub fn get_api(&self) {

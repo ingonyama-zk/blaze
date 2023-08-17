@@ -6,9 +6,11 @@ use std::{
 
 use dotenv::dotenv;
 use ingo_blaze::{
-    driver_client::dclient::*,
-    ingo_hash::poseidon_api::{Hash, PoseidonClient, PoseidonInitializeParameters, PoseidonResult},
-    ingo_hash::utils::{num_of_elements_in_base_layer, TreeMode},
+    driver_client::*,
+    ingo_hash::{
+        num_of_elements_in_base_layer, Hash, PoseidonClient, PoseidonInitializeParameters,
+        PoseidonResult, TreeMode,
+    },
 };
 use log::info;
 use num::{BigUint, Num};
@@ -28,10 +30,10 @@ const ONE: u32 = 1;
 fn test_sanity_check() {
     let instruction_path = get_instruction_path();
 
-    let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     let poseidon: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
 
-    poseidon.reset().expect_err("Failed while reset");
+    poseidon.dclient.reset().expect_err("Failed while reset");
     let params = poseidon.loaded_binary_parameters();
     info!("Driver parameters: [{:?}, {:032b}]", params[0], params[1]);
 
@@ -60,7 +62,7 @@ fn test_build_small_tree_par() {
 
     env_logger::try_init().expect("Invalid logger initialization");
 
-    let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     let poseidon: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
 
     let poseidon = Arc::new(Mutex::new(poseidon));
@@ -123,7 +125,7 @@ fn test_build_small_tree() {
 
     env_logger::try_init().expect("Invalid logger initialization");
 
-    let dclient = DriverClient::new("0", DriverConfig::driver_client_c1100_cfg());
+    let dclient = DriverClient::new("0", DriverConfig::driver_client_cfg(CardType::C1100));
     let poseidon: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
 
     let params = PoseidonInitializeParameters {

@@ -25,6 +25,8 @@ pub enum DriverClientError {
     CsvError(#[from] csv::Error),
     #[error("failed to load instruction set from: {:?}", path)]
     LoadFailed { path: String },
+    #[error("failed open file")]
+    FileError(#[from] io::Error),
     #[error("unknown driver client error")]
     Unknown,
 }

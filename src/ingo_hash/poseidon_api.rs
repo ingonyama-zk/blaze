@@ -1,11 +1,9 @@
 use packed_struct::prelude::PackedStruct;
-use std::{option::Option, thread::sleep, time::Duration};
+use std::option::Option;
 use strum::IntoEnumIterator;
 
-use crate::{
-    driver_client::dclient::*, driver_client::dclient_code::*, error::*,
-    ingo_hash::hash_hw_code::*, ingo_hash::utils::*, utils::convert_to_32_byte_array,
-};
+use super::{hash_hw_code::*, TreeMode};
+use crate::{driver_client::*, error::*, utils::convert_to_32_byte_array};
 
 use csv;
 use num::{bigint::BigUint, Num};
@@ -95,15 +93,8 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         .collect::<Vec<u32>>()
     }
 
-    fn reset(&self) -> Result<()> {
-        self.dclient.set_dfx_decoupling(1)?;
-        self.dclient.set_dfx_decoupling(0)?;
-        sleep(Duration::from_millis(100));
-        Ok(())
-    }
-
     fn initialize(&self, param: PoseidonInitializeParameters) -> Result<()> {
-        self.reset()?;
+        self.dclient.reset()?;
         self.set_initialize_mode(true)?;
 
         self.load_instructions(&param.instruction_path)
@@ -117,6 +108,10 @@ impl DriverPrimitive<Hash, PoseidonInitializeParameters, &[u8], Vec<PoseidonResu
         self.set_tree_start_layer_for_tree(param.tree_mode)?;
         log::debug!("set merkle tree height: {:?}", param.tree_height);
         Ok(())
+    }
+
+    fn start_process(&self, _param: Option<usize>) -> Result<()> {
+        todo!()
     }
 
     fn set_data(&self, input: &[u8]) -> Result<()> {
@@ -194,11 +189,10 @@ impl PoseidonClient {
     }
 
     pub fn get_raw_results(&self, num_of_results: u32) -> Result<Vec<u8>> {
-        self.dclient.dma_read(
-            self.dclient.cfg.dma_baseaddr,
-            DMA_RW::OFFSET,
-            (64 * num_of_results).try_into().unwrap(),
-        )
+        let mut res = vec![0; (64 * num_of_results).try_into().unwrap()];
+        self.dclient
+            .dma_read(self.dclient.cfg.dma_baseaddr, DMA_RW::OFFSET, &mut res)?;
+        Ok(res)
     }
 
     pub fn get_last_hash_sent_to_host(&self) -> Result<u32> {
@@ -297,7 +291,7 @@ mod tests {
 
         info!("Create Driver API instance");
 
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
         let driver: PoseidonClient = PoseidonClient::new(Hash::Poseidon, dclient);
         let params = driver.loaded_binary_parameters();
         info!("Driver parameters: [{:?}, {:032b}]", params[0], params[1]);

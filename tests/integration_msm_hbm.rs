@@ -1,5 +1,5 @@
 use crate::msm::RunResults;
-use ingo_blaze::{driver_client::dclient::*, ingo_msm::*};
+use ingo_blaze::{driver_client::*, ingo_msm::*};
 use num_traits::Pow;
 use std::{
     env,
@@ -19,10 +19,8 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) = msm::input_generator_bls12_381(
-        Pow::pow(base, max_exp) as usize,
-        msm_api::PRECOMPUTE_FACTOR,
-    );
+    let (points, scalars, _, results) =
+        msm::input_generator_bls12_381(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 
@@ -37,16 +35,16 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-        let driver = msm_api::MSMClient::new(
-            msm_api::MSMInit {
-                mem_type: msm_api::PointMemoryType::DMA,
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+        let driver = MSMClient::new(
+            MSMInit {
+                mem_type: PointMemoryType::DMA,
                 is_precompute: true,
-                curve: msm_api::Curve::BLS381,
+                curve: Curve::BLS381,
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         let hbm_addr: u64 = 0x0;
         let offset: u64 = 0x0;
@@ -63,23 +61,24 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to initialize task and set number of elements: ");
-        let msm_params = msm_api::MSMParams {
+        let msm_params = MSMParams {
             nof_elements: msm_size as u32,
             hbm_point_addr: Some((hbm_addr, offset)),
         };
 
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to calculate MSM: ");
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(msm_api::MSMInput {
+        driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
         driver.get_api();
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
@@ -128,10 +127,8 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
 
     log::debug!("Timer generation start");
     let start_gen = Instant::now();
-    let (points, scalars, _, results) = msm::input_generator_bls12_377(
-        Pow::pow(base, max_exp) as usize,
-        msm_api::PRECOMPUTE_FACTOR,
-    );
+    let (points, scalars, _, results) =
+        msm::input_generator_bls12_377(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
     log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
 
@@ -146,16 +143,16 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
 
         log::info!("Create Driver API instance");
-        let dclient = DriverClient::new(&id, DriverConfig::driver_client_c1100_cfg());
-        let driver = msm_api::MSMClient::new(
-            msm_api::MSMInit {
-                mem_type: msm_api::PointMemoryType::HBM,
+        let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
+        let driver = MSMClient::new(
+            MSMInit {
+                mem_type: PointMemoryType::HBM,
                 is_precompute: true,
-                curve: msm_api::Curve::BLS377,
+                curve: Curve::BLS377,
             },
             dclient,
         );
-        driver.reset()?;
+        driver.driver_client.reset()?;
 
         // log::debug!("writing data to HBM");
         let hbm_addr: u64 = 0x0;
@@ -173,23 +170,24 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to initialize task and set number of elements: ");
-        let msm_params = msm_api::MSMParams {
+        let msm_params = MSMParams {
             nof_elements: msm_size as u32,
             hbm_point_addr: Some((hbm_addr, offset)),
         };
 
-        let _ = driver.initialize(msm_params);
+        driver.initialize(msm_params)?;
+        driver.start_process(None)?;
         driver.driver_client.firewalls_status();
 
         log::info!("Starting to calculate MSM: ");
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
-        let _ = driver.set_data(msm_api::MSMInput {
+        driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
             params: msm_params,
-        });
+        })?;
         let dur_set = start_set_data.elapsed();
         let start_get = Instant::now();
         driver.driver_client.firewalls_status();
