@@ -7,12 +7,15 @@ fn ntt_test_correctness() -> Result<(), Box<dyn Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
 
-    let input_fname = env::var("INFNAME").unwrap();
+    //let input_fname = env::var("INFNAME").unwrap();
+    let input_fname = env::var("INFNAME").unwrap_or_else(|_| "/home/administrator/ekaterina/blaze/tests/test_data/in_bin_00.dat".to_string());
+              
     let mut in_f = File::open(input_fname).expect("no file found");
     let mut in_vec: Vec<u8> = Default::default();
     in_f.read_to_end(&mut in_vec)?;
 
-    let output_fname = env::var("OUTFNAME").unwrap();
+    //let output_fname = env::var("OUTFNAME").unwrap();
+    let output_fname = env::var("OUTFNAME").unwrap_or_else(|_| "/home/administrator/ekaterina/blaze/tests/test_data/ref_bin_00.dat".to_string());
     let mut out_f = File::open(output_fname).expect("no file found");
     let mut out_vec: Vec<u8> = Default::default();
     out_f.read_to_end(&mut out_vec)?;
