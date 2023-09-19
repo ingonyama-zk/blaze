@@ -12,8 +12,10 @@ pub mod msm;
 #[test]
 fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
-    let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let bin_file = env::var("FILENAME").unwrap();
+    //let id = env::var("ID").unwrap_or_else(|_| 1.to_string());
+    let id = 1.to_string();
+    // let bin_file = env::var("FILENAME").unwrap();
+    let bin_file = "/home/administrator/eli/fpga-bin/msm-bls377/user.bin";
 
     let msm_size = env::var("MSM_SIZE")
         .unwrap_or_else(|_| 8192.to_string())
@@ -28,8 +30,8 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,
-            is_precompute: false,
-            curve: Curve::BLS381,
+            is_precompute:  true,    // false,
+            curve: Curve::BLS377,     //   BLS381
         },
         dclient,
     );
@@ -62,7 +64,8 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     driver.task_label()?;
 
     let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
+        //msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
+        msm::input_generator_bls12_377(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
 
     log::info!("Starting to initialize task and set number of elements: ");
     let msm_params = MSMParams {
@@ -82,7 +85,8 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     driver.wait_result()?;
     let mres = driver.result(None).unwrap().unwrap();
     let (is_on_curve, is_eq) =
-        msm::result_check_bls12_381(mres.result, msm_result, results, msm_size as usize);
+        //msm::result_check_bls12_381(mres.result, msm_result, results, msm_size as usize);
+        msm::result_check_bls12_377(mres.result, msm_result, results, msm_size as usize);
     log::info!("Is point on the {:?} curve {}", Curve::BLS377, is_on_curve);
     log::info!("Is Result Equal To Expected {}", is_eq);
     assert!(is_on_curve);
@@ -386,7 +390,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let msm_size = 67108864; // 2**26
+    let msm_size = 67108864; //67108864; // 2**26
 
     log::debug!("Timer start to generate test data");
     let start_gen = Instant::now();
