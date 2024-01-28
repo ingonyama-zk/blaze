@@ -1,10 +1,16 @@
-use ingo_blaze::{driver_client::*, ingo_msm::*, utils::*, error::DriverClientError};
+use ingo_blaze::{
+    driver_client::{dclient_cfg::BinType, *},
+    error::DriverClientError,
+    ingo_msm::*,
+    utils::*,
+};
 use num_traits::Pow;
 use std::{
     env,
     fmt::Display,
+    io::Error,
     thread::sleep,
-    time::{Duration, Instant}, io::Error,
+    time::{Duration, Instant},
 };
 
 pub mod msm;
@@ -425,20 +431,12 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
 
     driver.driver_client.firewalls_status();
 
-    let params = driver.loaded_binary_parameters();
-    let bin_id = params[0];
-    if bin_id == 0 {
-         //Box::new<dyn Err("aaaa")>;  
-         //return Err(Box::new("Oops"));
-         return Err(Box::new(DriverClientError::NotMsmBin));
-         //eprintln!("Error: Could not complete task")
-         //println!("NOT MSM binary loaded");
-         //std::process::exit(1);
+    if driver.get_bin_type() != BinType::MSM {
+        return Err(Box::new(DriverClientError::NotMsmBin));
     }
 
+    let params = driver.loaded_binary_parameters();
     let params_parce = MSMImageParametrs::parse_image_params(params[1]);
-
-    //let xxx=  driver.get_api();
 
     params_parce.debug_information();
     log::info!("Checking MSM core is ready: ");

@@ -43,6 +43,30 @@ pub trait DriverPrimitive<T, P, I, O> {
     /// The `result` method returns the output data from the driver primitive,
     ///  optionally with a specific parameter. If there is no output data available, it returns `None`.
     fn result(&self, param: Option<usize>) -> Result<Option<O>>;
+
+    fn get_bin_type(&self) -> BinType {
+        let params = &self.loaded_binary_parameters();
+        let bin_id = params[0];
+        match bin_id {
+            0 => BinType::MSM,
+            1 => BinType::NTT,
+            3 => BinType::POSEIDON,
+            _ => BinType::NONE,
+        }
+    }
+
+    fn get_driver_details(&self) -> (BinType, u32) {
+        let params = &self.loaded_binary_parameters();
+        let bin_id = params[0];
+        let image_paramters = params[1];
+        let bin_id = match bin_id {
+            0 => BinType::MSM,
+            1 => BinType::NTT,
+            3 => BinType::POSEIDON,
+            _ => BinType::NONE,
+        };
+        (bin_id, image_paramters)
+    }
 }
 
 /// The [`DriverClient`] is described bunch of addreses on FPGA which called [`DriverConfig`] also
