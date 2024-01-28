@@ -1,10 +1,10 @@
-use ingo_blaze::{driver_client::*, ingo_msm::*, utils::*};
+use ingo_blaze::{driver_client::*, ingo_msm::*, utils::*, error::DriverClientError};
 use num_traits::Pow;
 use std::{
     env,
     fmt::Display,
     thread::sleep,
-    time::{Duration, Instant},
+    time::{Duration, Instant}, io::Error,
 };
 
 pub mod msm;
@@ -15,7 +15,7 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     //let id = env::var("ID").unwrap_or_else(|_| 1.to_string());
     let id = 1.to_string();
     // let bin_file = env::var("FILENAME").unwrap();
-    let bin_file = "/home/administrator/eli/fpga-bin/msm-bls377/user.bin";
+    let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
 
     let msm_size = env::var("MSM_SIZE")
         .unwrap_or_else(|_| 8192.to_string())
@@ -30,8 +30,8 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     let driver = MSMClient::new(
         MSMInit {
             mem_type: PointMemoryType::DMA,
-            is_precompute:  true,    // false,
-            curve: Curve::BLS377,     //   BLS381
+            is_precompute: true,  // false,
+            curve: Curve::BLS377, //   BLS381
         },
         dclient,
     );
@@ -390,15 +390,17 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let msm_size = 67108864; //67108864; // 2**26
+    let msm_size = 1024; //  1048576; //67108864; //67108864; // 2**26
 
-    log::debug!("Timer start to generate test data");
-    let start_gen = Instant::now();
-    let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_377(msm_size as usize, PRECOMPUTE_FACTOR);
-    let duration_gen = start_gen.elapsed();
-    log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
+    let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
 
+    /*    log::debug!("Timer start to generate test data");
+       let start_gen = Instant::now();
+       let (points, scalars, msm_result, results) =
+           msm::input_generator_bls12_377(msm_size as usize, PRECOMPUTE_FACTOR);
+       let duration_gen = start_gen.elapsed();
+       log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
+    */
     log::info!("Create Driver API instance");
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     let driver = MSMClient::new(
@@ -411,8 +413,33 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     );
     driver.driver_client.reset()?;
 
+    log::info!("Start to loading binary file...");
+    let buf = read_binary_file(&bin_file)?;
+    log::info!("Buffer size: {:?}", buf.len());
+
+    log::info!("Loading Binary File...");
+    driver.driver_client.setup_before_load_binary()?;
+    let ret = driver.driver_client.load_binary(buf.as_slice());
+    log::info!("Load binary return HBICAP code: {:?}", ret);
+    driver.driver_client.unblock_firewalls()?;
+
+    driver.driver_client.firewalls_status();
+
     let params = driver.loaded_binary_parameters();
+    let bin_id = params[0];
+    if bin_id == 0 {
+         //Box::new<dyn Err("aaaa")>;  
+         //return Err(Box::new("Oops"));
+         return Err(Box::new(DriverClientError::NotMsmBin));
+         //eprintln!("Error: Could not complete task")
+         //println!("NOT MSM binary loaded");
+         //std::process::exit(1);
+    }
+
     let params_parce = MSMImageParametrs::parse_image_params(params[1]);
+
+    //let xxx=  driver.get_api();
+
     params_parce.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
@@ -435,6 +462,16 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     log::debug!("Timer start");
     let start_set_data = Instant::now();
     let start_full = Instant::now();
+
+    let precompute_factor: u32 = params_parce.hif2_cpu_c_precompute.into();
+
+    log::debug!("Timer start to generate test data");
+    let start_gen = Instant::now();
+    let (points, scalars, msm_result, results) =
+        msm::input_generator_bls12_377(msm_size as usize, precompute_factor);
+    let duration_gen = start_gen.elapsed();
+    log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
+
     driver.set_data(MSMInput {
         points: Some(points),
         scalars,

@@ -8,8 +8,8 @@ use dotenv::dotenv;
 use ingo_blaze::{
     driver_client::*,
     ingo_hash::{
-        num_of_elements_in_base_layer, Hash, PoseidonClient, PoseidonInitializeParameters,
-        PoseidonResult, TreeMode, DmaBuffer, Align4K, PoseidonReadResult,
+        num_of_elements_in_base_layer, Align4K, DmaBuffer, Hash, PoseidonClient,
+        PoseidonInitializeParameters, PoseidonReadResult, PoseidonResult, TreeMode,
     },
 };
 use log::info;
@@ -113,19 +113,18 @@ fn test_build_small_tree_parllel() {
         scope.spawn_fifo(move |_s| {
             assert_eq!((output_buffer.get_mut().as_mut_ptr() as u64) % 4096, 0);
 
-
             let result = poseidon
-            .result(Some(TREE_HEIGHT_4_NUM_OF_NODES))     //     compare to old poseidon/dist branch
-            .unwrap()
-            .unwrap();
-
-       /*      let result = poseidon
-                .result(Some(PoseidonReadResult {
-                    expected_result: output_buffer.len() / 64,
-                    result_store_buffer: &mut output_buffer,
-                }))
+                .result(Some(TREE_HEIGHT_4_NUM_OF_NODES)) //     compare to old poseidon/dist branch
                 .unwrap()
-                .unwrap(); */
+                .unwrap();
+
+            /*      let result = poseidon
+            .result(Some(PoseidonReadResult {
+                expected_result: output_buffer.len() / 64,
+                result_store_buffer: &mut output_buffer,
+            }))
+            .unwrap()
+            .unwrap(); */
 
             poseidon.log_api_values();
 
@@ -136,7 +135,6 @@ fn test_build_small_tree_parllel() {
         });
     });
 }
-
 
 #[test]
 /* fn test_build_small_tree_par() {
@@ -264,4 +262,3 @@ fn get_hash_input_outputs(tree_size: u32) -> (usize, usize) {
         nof_results.try_into().unwrap(),
     )
 }
-

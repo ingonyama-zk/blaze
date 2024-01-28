@@ -330,9 +330,9 @@ impl MSMClient {
     }
 }
 
-#[derive(PackedStruct, Debug)]
-#[packed_struct(bit_numbering = "msb0")]
-pub struct MSMImageParametrs {
+/* #[derive(PackedStruct, Debug)]
+#[packed_struct(bit_numbering = "msb0")] */
+/* pub struct MSMImageParametrs {
     #[packed_field(bits = "28..=31", endian = "lsb")]
     pub hif2cpu_c_is_stub: u8,
     #[packed_field(bits = "20..=27", endian = "lsb")]
@@ -345,11 +345,28 @@ pub struct MSMImageParametrs {
     pub hif2_cpu_c_number_of_segments: u8,
     #[packed_field(bits = "0..=3", endian = "lsb")]
     pub hif2_cpu_c_place_holder: u8,
+} */
+#[derive(PackedStruct, Debug)]
+#[packed_struct(bit_numbering = "msb0")]
+pub struct MSMImageParametrs {
+    #[packed_field(bits = "28..=31", endian = "lsb")]
+    pub hif2cpu_c_is_stub: u8,
+    #[packed_field(bits = "24..=27", endian = "lsb")]
+    pub hif2_cpu_c_curve: u8,
+    #[packed_field(bits = "20..=23", endian = "lsb")]
+    pub hif2_cpu_c_number_of_ec_adders: u8,
+    #[packed_field(bits = "12..=19", endian = "lsb")]
+    pub hif2_cpu_c_buckets_mem_addr_width: u8,
+    #[packed_field(bits = "8..=11", endian = "lsb")]
+    pub hif2_cpu_c_number_of_segments: u8,
+    #[packed_field(bits = "0..=7", endian = "lsb")]
+    pub hif2_cpu_c_precompute: u8,
 }
 
 impl ParametersAPI for MSMImageParametrs {
     fn parse_image_params(params: u32) -> MSMImageParametrs {
-        let buf = params.reverse_bits().to_be_bytes();
+        //let buf = params.reverse_bits().to_be_bytes();
+        let buf = params.to_be_bytes();
         MSMImageParametrs::unpack(&buf).unwrap()
     }
 
@@ -374,6 +391,6 @@ impl ParametersAPI for MSMImageParametrs {
             "Number of segmemts: {:?}",
             self.hif2_cpu_c_number_of_segments
         );
-        log::debug!("Place Holder: {:?}", self.hif2_cpu_c_place_holder);
+        log::debug!("PreCompute: {:?}", self.hif2_cpu_c_precompute);
     }
 }

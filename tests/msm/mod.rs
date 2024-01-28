@@ -14,7 +14,7 @@ use ark_std::UniformRand;
 use ::std::ops::{Add, Mul};
 use std::{fmt::Display, time::Duration};
 
-const SCALAR_SIZE_BLS377: u32 = 32;
+const SCALAR_SIZE_BLS377: u32 = 32; //    TBD    256 / precompue
 const SCALAR_SIZE_BLS381: u32 = 32;
 const SCALAR_SIZE_BN254: u32 = 32;
 

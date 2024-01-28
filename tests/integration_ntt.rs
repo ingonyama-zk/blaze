@@ -1,3 +1,5 @@
+extern crate ingo_blaze;
+
 use ingo_blaze::{driver_client::*, ingo_ntt::*, utils};
 use log::info;
 use std::{env, error::Error, fs::File, io::Read};
@@ -8,14 +10,18 @@ fn ntt_test_correctness() -> Result<(), Box<dyn Error>> {
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
 
     //let input_fname = env::var("INFNAME").unwrap();
-    let input_fname = env::var("INFNAME").unwrap_or_else(|_| "/home/administrator/ekaterina/blaze/tests/test_data/in_bin_00.dat".to_string());
-              
+    let input_fname = env::var("INFNAME").unwrap_or_else(|_| {
+        "/home/administrator/ekaterina/blaze/tests/test_data/in_bin_00.dat".to_string()
+    });
+
     let mut in_f = File::open(input_fname).expect("no file found");
     let mut in_vec: Vec<u8> = Default::default();
     in_f.read_to_end(&mut in_vec)?;
 
     //let output_fname = env::var("OUTFNAME").unwrap();
-    let output_fname = env::var("OUTFNAME").unwrap_or_else(|_| "/home/administrator/ekaterina/blaze/tests/test_data/ref_bin_00.dat".to_string());
+    let output_fname = env::var("OUTFNAME").unwrap_or_else(|_| {
+        "/home/administrator/ekaterina/blaze/tests/test_data/ref_bin_00.dat".to_string()
+    });
     let mut out_f = File::open(output_fname).expect("no file found");
     let mut out_vec: Vec<u8> = Default::default();
     out_f.read_to_end(&mut out_vec)?;
@@ -25,15 +31,16 @@ fn ntt_test_correctness() -> Result<(), Box<dyn Error>> {
 
     info!("Create Driver API instance");
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
-    if std::env::var("BIN").is_ok() {
-        let bin_fname = std::env::var("BIN").unwrap();
-        info!("Start reading binary");
-        let bin = utils::read_binary_file(&bin_fname)?;
-        info!("Start setup FPGA");
-        dclient.setup_before_load_binary()?;
-        info!("Start loading driver");
-        dclient.load_binary(&bin)?;
-    }
+    //if std::env::var("BIN").is_ok() {
+    //let bin_fname = std::env::var("BIN").unwrap();
+    let bin_fname = "/home/administrator/eli/fpga-bin/ntt/user.bin";
+    info!("Start reading binary");
+    let bin = utils::read_binary_file(&bin_fname)?;
+    info!("Start setup FPGA");
+    dclient.setup_before_load_binary()?;
+    info!("Start loading driver");
+    dclient.load_binary(&bin)?;
+    //}
 
     let driver = NTTClient::new(NTT::Ntt, dclient);
     log::info!("Starting set NTT data");

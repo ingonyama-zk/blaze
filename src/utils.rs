@@ -56,7 +56,7 @@ impl AccessFlags {
 }
 
 // ==== read/write ====
-/* 
+/*
 pub fn open_channel(path: &str, mode: AccessFlags) -> std::fs::File {
     let mut options = OpenOptions::new();
     if mode == AccessFlags::RdwrMode || mode == AccessFlags::RdMode {
@@ -90,7 +90,6 @@ pub fn open_channel(path: &str, mode: AccessFlags) -> std::fs::File {
     }
     options.open(path).unwrap()
 }
-
 
 pub fn read_binary_file(path: &str) -> Result<Vec<u8>, Error> {
     let mut buffer = Vec::new();
