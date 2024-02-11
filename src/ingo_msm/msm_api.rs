@@ -296,6 +296,19 @@ impl MSMClient {
         )
     }
 
+    pub fn nof_elements_in_queue(&self) -> Result<u32> {
+        self.driver_client.ctrl_read_u32(
+            self.driver_client.cfg.ctrl_baseaddr,
+            INGO_MSM_ADDR::ADDR_HIF2CPU_C_NOF_PENDING_TASKS_IN_QUEUE,
+        )
+    }
+
+    pub fn is_precompute(&self) -> u8 {
+        let params = self.loaded_binary_parameters();
+        let image_parameters = MSMImageParametrs::parse_image_params(params[1]);
+        image_parameters.hif2_cpu_c_precompute
+    }
+
     pub fn load_data_to_hbm(&self, points: &[u8], addr: u64, offset: u64) -> Result<()> {
         log::debug!("HBM adress: {:#X?}", &addr);
         self.driver_client.ctrl_write_u32(

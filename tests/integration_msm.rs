@@ -396,7 +396,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let msm_size = 1024; //  1048576; //67108864; //67108864; // 2**26
+    let msm_size = 8388608; //  1048576; //67108864; //67108864; // 2**26
 
     let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
 
@@ -435,10 +435,10 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         return Err(Box::new(DriverClientError::NotMsmBin));
     }
 
-    let params = driver.loaded_binary_parameters();
-    let params_parce = MSMImageParametrs::parse_image_params(params[1]);
+    //let params = driver.loaded_binary_parameters();
+    //let image_parameters = MSMImageParametrs::parse_image_params(params[1]);
 
-    params_parce.debug_information();
+    //image_parameters.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
     driver.task_label()?;
@@ -450,7 +450,56 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         hbm_point_addr: None,
     };
     driver.initialize(msm_params)?;
-    driver.start_process(None)?;
+
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    // driver.start_process(None)?;
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    println!(
+        "nof_elements_in_queue =   {}",
+        driver.nof_elements_in_queue()?
+    );
+    driver.initialize(msm_params)?;
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    println!(
+        "nof_elements_in_queue =   {}",
+        driver.nof_elements_in_queue()?
+    );
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    driver.start_process(Some(1))?;
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
+    println!(
+        "nof_elements_in_queue =   {}",
+        driver.nof_elements_in_queue()?
+    );
+
+    driver.start_process(Some(1))?;
+
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
 
     driver.driver_client.firewalls_status();
     driver.task_label()?;
@@ -461,7 +510,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     let start_set_data = Instant::now();
     let start_full = Instant::now();
 
-    let precompute_factor: u32 = params_parce.hif2_cpu_c_precompute.into();
+    let precompute_factor: u32 = driver.is_precompute().into();
 
     log::debug!("Timer start to generate test data");
     let start_gen = Instant::now();
@@ -476,7 +525,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         params: msm_params,
     })?;
     let dur_set = start_set_data.elapsed();
-
+    println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
     let start_wait = Instant::now();
     driver.driver_client.firewalls_status();
     log::info!("Waiting MSM result: ");
