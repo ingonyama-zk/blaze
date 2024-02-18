@@ -7,15 +7,12 @@ use strum::IntoEnumIterator;
 
 pub struct MSMClient {
     mem_type: PointMemoryType,
-    // If precompute factor set to 1 is the basic MSM computation without optimization
-    precompute_factor: u32,
     msm_cfg: MSMConfig,
     pub driver_client: DriverClient,
 }
 
 pub struct MSMInit {
     pub mem_type: PointMemoryType,
-    pub is_precompute: bool,
     pub curve: Curve,
 }
 
@@ -36,19 +33,14 @@ pub struct MSMResult {
     pub result_label: u32,
 }
 
-pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
-pub const PRECOMPUTE_FACTOR: u32 = 8;
+//pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
+//pub const PRECOMPUTE_FACTOR: u32 = 8;
 
 impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
     /// Creates a new [`MSMClient`].
     fn new(init: MSMInit, dclient: DriverClient) -> Self {
         MSMClient {
             mem_type: init.mem_type,
-            precompute_factor: if init.is_precompute {
-                PRECOMPUTE_FACTOR
-            } else {
-                PRECOMPUTE_FACTOR_BASE
-            },
             msm_cfg: MSMConfig::msm_cfg(init.curve, init.mem_type),
             driver_client: dclient,
         }
@@ -175,7 +167,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         } else if data.points.is_some() && data.params.hbm_point_addr.is_none() {
             log::debug!("Set points and scalars");
             let mut payload_size_points = CHUNK_SIZE * self.msm_cfg.point_size.unwrap();
-            payload_size_points *= self.precompute_factor as usize;
+            payload_size_points *= self.get_precompute_factor() as usize;
 
             let p_addr = self.msm_cfg.dma_points_addr.unwrap();
             let p = data.points.as_ref().unwrap();
@@ -296,14 +288,14 @@ impl MSMClient {
         )
     }
 
-    pub fn nof_elements_in_queue(&self) -> Result<u32> {
+    pub fn nof_pending_tasks_in_queue(&self) -> Result<u32> {
         self.driver_client.ctrl_read_u32(
             self.driver_client.cfg.ctrl_baseaddr,
             INGO_MSM_ADDR::ADDR_HIF2CPU_C_NOF_PENDING_TASKS_IN_QUEUE,
         )
     }
 
-    pub fn is_precompute(&self) -> u8 {
+    pub fn get_precompute_factor(&self) -> u8 {
         let params = self.loaded_binary_parameters();
         let image_parameters = MSMImageParametrs::parse_image_params(params[1]);
         image_parameters.hif2_cpu_c_precompute
