@@ -24,7 +24,8 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
     //let id = env::var("ID").unwrap_or_else(|_| 1.to_string());
     let id = 0.to_string();
     // let bin_file = env::var("FILENAME").unwrap();
-    let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
+    //let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
+    let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/msmfeb20.bin";
 
     let msm_size = env::var("MSM_SIZE")
         .unwrap_or_else(|_| 8192.to_string())
@@ -43,6 +44,9 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
         },
         dclient,
     );
+
+    let precompute_factor: u32 =  driver.get_precompute_factor().into();
+    println!("precompute_factor =   {}", precompute_factor);
 
     log::info!("Start to loading binary file...");
     let buf = read_binary_file(&bin_file)?;
@@ -73,7 +77,7 @@ fn load_msm_binary_test() -> Result<(), Box<dyn std::error::Error>> {
 
     let (points, scalars, msm_result, results) =
         //msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR_BASE);
-        msm::input_generator_bls12_377(msm_size as usize, driver.get_precompute_factor().into());
+        msm::input_generator_bls12_377(msm_size as usize, precompute_factor);
 
     log::info!("Starting to initialize task and set number of elements: ");
     let msm_params = MSMParams {
@@ -173,7 +177,7 @@ fn msm_bls12_381_test() -> Result<(), Box<dyn std::error::Error>> {
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     let driver = MSMClient::new(
         MSMInit {
-            mem_type: PointMemoryType::DMA,
+            mem_type: PointMemoryType::DMA,        
             curve: Curve::BLS381,
         },
         dclient,
@@ -298,8 +302,8 @@ impl Display for RunResults {
 fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let low_exp: u32 = 1;
-    let max_exp: u32 = 1;
+    let low_exp: u32 = 10;
+    let max_exp: u32 = 10;
     let base = 2;
 
     let mut points: Vec<u8> = Vec::new();
@@ -333,6 +337,7 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
             dclient,
         );
         driver.driver_client.reset()?;
+        driver.get_api();
 
         log::info!("Checking MSM core is ready: ");
         driver.is_msm_engine_ready()?;
@@ -419,9 +424,11 @@ fn msm_bls12_377_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
 fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::try_init().expect("Invalid logger initialisation");
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
-    let msm_size = 67108864; //8388608; //  1048576; //67108864; //67108864; // 2**26
+    let msm_size = 1024; //67108864; //8388608; //  1048576; //67108864; //67108864; // 2**26
 
-    let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
+    //let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
+    let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/msmfeb20.bin";
+    
 
     /*    log::debug!("Timer start to generate test data");
        let start_gen = Instant::now();
@@ -430,6 +437,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
        let duration_gen = start_gen.elapsed();
        log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
     */
+
     log::info!("Create Driver API instance");
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     let driver = MSMClient::new(
@@ -474,13 +482,13 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     driver.initialize(msm_params)?;
 
     println!("is_msm_engine_ready =   {}", driver.is_msm_engine_ready()?);
-    // driver.start_process(None)?;
-    driver.start_process(Some(1))?;
+     driver.start_process(None)?;
+    //driver.start_process(Some(1))?;
     println!(
         "nof_pending_tasks_in_queue =   {}",
         driver.nof_pending_tasks_in_queue()?
     );
-    for i in 1..25 {
+  /*   for i in 1..25 {
         driver.start_process(Some(1))?;
         println!(
             "{} -   is_msm_engine_ready =   {}",
@@ -494,7 +502,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
             );
         }
     }
-
+ */
     driver.driver_client.firewalls_status();
     driver.task_label()?;
     driver.nof_elements()?;
@@ -504,7 +512,8 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     let start_set_data = Instant::now();
     let start_full = Instant::now();
 
-    let precompute_factor: u32 = driver.get_precompute_factor().into();
+    let precompute_factor: u32 =  driver.get_precompute_factor().into();
+    println!("precompute_factor =   {}", precompute_factor);
 
     log::debug!("Timer start to generate test data");
     let start_gen = Instant::now();
@@ -547,6 +556,12 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     sleep(Duration::from_secs(1));
     Ok(())
 }
+
+
+
+
+
+
 /*
 #[test]
 fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {

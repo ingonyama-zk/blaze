@@ -56,8 +56,10 @@ fn msm_bls377_dma_cfg() -> MSMConfig {
         result_point_size: 144,
         point_size: Some(96),
         scalar_size: 32,
-        dma_scalars_addr: Some(0x0000010000000000), //dma_scalars_addr: Some(0x0000010000000000),
-        dma_points_addr: Some(0x0000000000000000),  // dma_points_addr: Some(0x0000000000000000),
+        dma_scalars_addr: Some(0x0000_0200_0000_0000),
+        dma_points_addr: Some(0x0000_0100_0000_0000),
+        // dma_scalars_addr: Some(0x0000_0100_0000_0000),
+        // dma_points_addr: Some(0x0000_0000_0000_0000),
     }
 }
 

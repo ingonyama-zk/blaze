@@ -33,8 +33,8 @@ pub struct MSMResult {
     pub result_label: u32,
 }
 
-//pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
-//pub const PRECOMPUTE_FACTOR: u32 = 8;
+pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
+pub const PRECOMPUTE_FACTOR: u32 = 7;
 
 impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
     /// Creates a new [`MSMClient`].

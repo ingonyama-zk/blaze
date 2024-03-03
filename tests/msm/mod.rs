@@ -14,7 +14,7 @@ use ark_std::UniformRand;
 use ::std::ops::{Add, Mul};
 use std::{fmt::Display, time::Duration};
 
-const SCALAR_SIZE_BLS377: u32 = 32; //    TBD    256 / precompue
+const SCALAR_SIZE_BLS377: u32 = 37; //    TBD    256 / precompue
 const SCALAR_SIZE_BLS381: u32 = 32;
 const SCALAR_SIZE_BN254: u32 = 32;
 
@@ -167,6 +167,7 @@ pub fn result_check_bls12_377(
         )
     } else {
         log::debug!("Expected MSM result: {:}\n", msm_res.into_affine());
+        println!("{}     {}",point.to_string(), msm_res.into_affine().to_string());
         (
             point.is_on_curve(),
             point.to_string() == msm_res.into_affine().to_string(),
