@@ -426,18 +426,8 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
     let msm_size = 1024; //67108864; //8388608; //  1048576; //67108864; //67108864; // 2**26
 
-    //let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/user.bin";
     let bin_file = "/home/administrator/users/eli/fpga-bin/msm-bls377/msmfeb20.bin";
     
-
-    /*    log::debug!("Timer start to generate test data");
-       let start_gen = Instant::now();
-       let (points, scalars, msm_result, results) =
-           msm::input_generator_bls12_377(msm_size as usize, PRECOMPUTE_FACTOR);
-       let duration_gen = start_gen.elapsed();
-       log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
-    */
-
     log::info!("Create Driver API instance");
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     let driver = MSMClient::new(
@@ -466,11 +456,6 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
 
     driver.driver_client.firewalls_status();
 
-
-    //let params = driver.loaded_binary_parameters();
-    //let image_parameters = MSMImageParametrs::parse_image_params(params[1]);
-
-    //image_parameters.debug_information();
     log::info!("Checking MSM core is ready: ");
     driver.is_msm_engine_ready()?;
     driver.task_label()?;
@@ -490,21 +475,7 @@ fn msm_bls12_377_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
         "nof_pending_tasks_in_queue =   {}",
         driver.nof_pending_tasks_in_queue()?
     );
-  /*   for i in 1..25 {
-        driver.start_process(Some(1))?;
-        println!(
-            "{} -   is_msm_engine_ready =   {}",
-            i,
-            driver.is_msm_engine_ready()?
-        );
-        if i % 5 == 0 {
-            println!(
-                "nof_pending_tasks_in_queue =   {}",
-                driver.nof_pending_tasks_in_queue()?
-            );
-        }
-    }
- */
+
     driver.driver_client.firewalls_status();
     driver.task_label()?;
     driver.nof_elements()?;
@@ -572,14 +543,6 @@ fn msm_bls12_381_precompute_test() -> Result<(), Box<dyn std::error::Error>> {
     let mut points: Vec<u8> = Vec::new();
     let mut scalars: Vec<u8> = Vec::new();
     let mut results: Vec<bls381G1Projective> = Vec::new();
-
-/*     log::debug!("Timer generation start");
-    let start_gen = Instant::now();
-    let (points, scalars, _, results) =
-        msm::input_generator_bls12_381(Pow::pow(base, max_exp) as usize, precompute_factor);
-    let duration_gen = start_gen.elapsed();
-    log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
- */
 
     let mut run_results: Vec<RunResults> = Vec::new();
     for iter in low_exp..=max_exp {
@@ -684,14 +647,7 @@ fn msm_bls12_381_precompute_max_test() -> Result<(), Box<dyn std::error::Error>>
     let id = env::var("ID").unwrap_or_else(|_| 0.to_string());
     let msm_size = 67108864; // 2**26
 
-/*     log::debug!("Timer start to generate test data");
-    let start_gen = Instant::now();
-    let (points, scalars, msm_result, results) =
-        msm::input_generator_bls12_381(msm_size as usize, PRECOMPUTE_FACTOR);
-    let duration_gen = start_gen.elapsed();
-    log::debug!("Time elapsed in generate test data is: {:?}", duration_gen);
-
- */    log::info!("Create Driver API instance");
+    log::info!("Create Driver API instance");
     let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
     let driver = MSMClient::new(
         MSMInit {
