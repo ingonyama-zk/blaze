@@ -14,9 +14,9 @@ use ark_std::UniformRand;
 use ::std::ops::{Add, Mul};
 use std::{fmt::Display, time::Duration};
 
-const SCALAR_SIZE_BLS377: u32 = 37; //    TBD    256 / precompue
-const SCALAR_SIZE_BLS381: u32 = 32;
-const SCALAR_SIZE_BN254: u32 = 32;
+//SCALAR_SIZE_BLS377: u32 = 37; //    TBD    256 / precompue
+//const SCALAR_SIZE_BLS381: u32 = 32;
+//const SCALAR_SIZE_BN254: u32 = 32;
 
 const LARGE_PARAM: usize = 256;
 
@@ -120,9 +120,15 @@ pub fn precompute_base_bls12_377(base: bls377G1Affine, precompute_factor: u32) -
     bases.extend_from_slice(&x_bytes);
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
+
+    let scalar_size_bls377= (256f32/precompute_factor as f32).ceil() as u32;
+
     for i in 1..precompute_factor {
         current_point = base;
-        let coeff = bls377Fr::from(two.pow(SCALAR_SIZE_BLS377 * i));
+        //let coeff = bls377Fr::from(two.pow(SCALAR_SIZE_BLS377 * i));
+        let coeff = bls377Fr::from(two.pow(scalar_size_bls377 * i));
+        
+
         current_point = current_point.mul(coeff).into_affine();
 
         let x_bytes = current_point.x.into_repr().to_bytes_le();
@@ -241,9 +247,13 @@ pub fn precompute_base_bn254(base: bn254G1Affine, precompute_factor: u32) -> Vec
     bases.extend_from_slice(&x_bytes);
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
+
+    let scalar_size_bn254= (256f32/precompute_factor as f32).ceil() as u32;
+
     for i in 1..precompute_factor {
         current_point = base;
-        let coeff = bn254Fr::from(two.pow(SCALAR_SIZE_BN254 * i));
+        //let coeff = bn254Fr::from(two.pow(SCALAR_SIZE_BN254 * i));
+        let coeff = bn254Fr::from(two.pow(scalar_size_bn254 * i));
         current_point = current_point.mul(coeff).into_affine();
 
         let x_bytes = current_point.x.into_repr().to_bytes_le();
@@ -366,9 +376,15 @@ pub fn precompute_base_bls12_381(base: bls381G1Affine, precompute_factor: u32) -
     bases.extend_from_slice(&x_bytes);
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
+
+    let scalar_size_bls381= (256f32/precompute_factor as f32).ceil() as u32;
+
     for i in 1..precompute_factor {
         current_point = base;
-        let coeff = bls381Fr::from(two.pow(SCALAR_SIZE_BLS381 * i));
+        //let coeff = bls381Fr::from(two.pow(SCALAR_SIZE_BLS381 * i));
+        
+        let coeff = bls381Fr::from(two.pow(scalar_size_bls381 * i));
+
         current_point = current_point.mul(coeff).into_affine();
 
         let x_bytes = current_point.x.into_repr().to_bytes_le();
