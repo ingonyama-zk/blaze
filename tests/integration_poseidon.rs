@@ -8,8 +8,8 @@ use dotenv::dotenv;
 use ingo_blaze::{
     driver_client::*,
     ingo_hash::{
-        num_of_elements_in_base_layer, Hash, PoseidonClient, PoseidonInitializeParameters,
-        PoseidonResult, TreeMode,
+        num_of_elements_in_base_layer, Align4K, DmaBuffer, Hash, PoseidonClient,
+        PoseidonInitializeParameters, PoseidonReadResult, PoseidonResult, TreeMode,
     },
 };
 use log::info;
@@ -17,7 +17,8 @@ use num::{BigUint, Num};
 
 fn get_instruction_path() -> String {
     dotenv().ok();
-    std::env::var("INSTRUCTION_PATH").expect("INSTRUCTION_PATH must be set.")
+    //std::env::var("INSTRUCTION_PATH").expect("INSTRUCTION_PATH must be set.")    //   TBD ENV
+    return "/home/administrator/users/ido/hw-poseidon/programs/PoseidonFullWPRC.csv".to_string();
 }
 
 const TREE_HEIGHT_4_NUM_OF_NODES: usize = 585;
@@ -57,7 +58,86 @@ fn test_sanity_check() {
 }
 
 #[test]
-fn test_build_small_tree_par() {
+fn test_build_small_tree_parllel() {
+    rayon::scope_fifo(|scope| {
+        let instruction_path = get_instruction_path();
+
+        env_logger::try_init().expect("Invalid logger initialization");
+
+        let dclient = DriverClient::new(&"0", DriverConfig::driver_client_cfg(CardType::C1100));
+        let poseidon: Arc<PoseidonClient> = Arc::new(PoseidonClient::new(Hash::Poseidon, dclient));
+
+        let tree_height = 7;
+        let (input_size, results_size) = get_hash_input_outputs(tree_height);
+
+        let params = PoseidonInitializeParameters {
+            tree_height,
+            tree_mode: TreeMode::TreeC,
+            instruction_path,
+        };
+
+        let nof_elements = num_of_elements_in_base_layer(params.tree_height);
+
+        poseidon.initialize(params);
+
+        poseidon.loaded_binary_parameters();
+
+        let scalar: Vec<u8> = BigUint::from_str_radix(TEST_SCALAR, 10)
+            .unwrap()
+            .to_bytes_le();
+
+        let mut input_buffer = DmaBuffer::new::<Align4K>(input_size * 32);
+        let mut output_buffer = DmaBuffer::new::<Align4K>(results_size * 64);
+
+        for _ in 0..(results_size * 64) {
+            output_buffer.get_mut().push(0);
+        }
+
+        for _ in 0..nof_elements {
+            for _ in 0..11 {
+                input_buffer.extend_from_slice(scalar.as_slice());
+            }
+        }
+
+        let poseidon_c = poseidon.clone();
+
+        scope.spawn_fifo(move |_s| {
+            assert_eq!((input_buffer.get_mut().as_mut_ptr() as u64) % 4096, 0);
+
+            poseidon_c.set_data(input_buffer.as_slice());
+
+            poseidon_c.log_api_values();
+            log::debug!("done writing");
+        });
+
+        scope.spawn_fifo(move |_s| {
+            assert_eq!((output_buffer.get_mut().as_mut_ptr() as u64) % 4096, 0);
+
+            let result = poseidon
+                .result(Some(TREE_HEIGHT_4_NUM_OF_NODES)) //     compare to old poseidon/dist branch
+                .unwrap()
+                .unwrap();
+
+            /*      let result = poseidon
+            .result(Some(PoseidonReadResult {
+                expected_result: output_buffer.len() / 64,
+                result_store_buffer: &mut output_buffer,
+            }))
+            .unwrap()
+            .unwrap(); */
+
+            poseidon.log_api_values();
+
+            assert_eq!(result.len(), output_buffer.len() / 64);
+
+            log::debug!("result {:?}", result.len());
+            log::debug!("done");
+        });
+    });
+}
+
+#[test]
+/* fn test_build_small_tree_par() {
     let instruction_path = get_instruction_path();
 
     env_logger::try_init().expect("Invalid logger initialization");
@@ -118,7 +198,7 @@ fn test_build_small_tree_par() {
         });
     });
 }
-
+ */
 #[test]
 fn test_build_small_tree() {
     let instruction_path = get_instruction_path();
@@ -166,4 +246,19 @@ fn test_build_small_tree() {
 
     log::debug!("{:?}", result.len());
     log::debug!("done");
+}
+
+fn get_hash_input_outputs(tree_size: u32) -> (usize, usize) {
+    let nof_elements = 11 * (u64::pow(8, tree_size));
+
+    let mut nof_results = 0;
+    for layer in 0..tree_size + 1 {
+        let results_in_layer = u64::pow(8, tree_size - layer);
+        nof_results += results_in_layer;
+    }
+
+    (
+        nof_elements.try_into().unwrap(),
+        nof_results.try_into().unwrap(),
+    )
 }

@@ -56,6 +56,23 @@ impl AccessFlags {
 }
 
 // ==== read/write ====
+/*
+pub fn open_channel(path: &str, mode: AccessFlags) -> std::fs::File {
+    let mut options = OpenOptions::new();
+    if mode == AccessFlags::RdwrMode || mode == AccessFlags::RdMode {
+        options.read(true);
+    }
+
+    if mode == AccessFlags::RdwrMode || mode == AccessFlags::WrMode {
+        options.write(true);
+    }
+
+    if cfg!(unix) {
+        options.custom_flags(libc::O_SYNC);
+        // options.custom_flags(libc::O_RDWR);
+    }
+    options.open(path).unwrap()
+} */
 
 pub fn open_channel(path: &str, mode: AccessFlags) -> std::fs::File {
     let mut options = OpenOptions::new();

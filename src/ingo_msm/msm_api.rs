@@ -7,15 +7,12 @@ use strum::IntoEnumIterator;
 
 pub struct MSMClient {
     mem_type: PointMemoryType,
-    // If precompute factor set to 1 is the basic MSM computation without optimization
-    precompute_factor: u32,
     msm_cfg: MSMConfig,
     pub driver_client: DriverClient,
 }
 
 pub struct MSMInit {
     pub mem_type: PointMemoryType,
-    pub is_precompute: bool,
     pub curve: Curve,
 }
 
@@ -36,19 +33,14 @@ pub struct MSMResult {
     pub result_label: u32,
 }
 
-pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
-pub const PRECOMPUTE_FACTOR: u32 = 8;
+//pub const PRECOMPUTE_FACTOR_BASE: u32 = 1;
+//pub const PRECOMPUTE_FACTOR: u32 = 7;
 
 impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
     /// Creates a new [`MSMClient`].
     fn new(init: MSMInit, dclient: DriverClient) -> Self {
         MSMClient {
             mem_type: init.mem_type,
-            precompute_factor: if init.is_precompute {
-                PRECOMPUTE_FACTOR
-            } else {
-                PRECOMPUTE_FACTOR_BASE
-            },
             msm_cfg: MSMConfig::msm_cfg(init.curve, init.mem_type),
             driver_client: dclient,
         }
@@ -175,7 +167,7 @@ impl DriverPrimitive<MSMInit, MSMParams, MSMInput, MSMResult> for MSMClient {
         } else if data.points.is_some() && data.params.hbm_point_addr.is_none() {
             log::debug!("Set points and scalars");
             let mut payload_size_points = CHUNK_SIZE * self.msm_cfg.point_size.unwrap();
-            payload_size_points *= self.precompute_factor as usize;
+            payload_size_points *= self.get_precompute_factor() as usize;
 
             let p_addr = self.msm_cfg.dma_points_addr.unwrap();
             let p = data.points.as_ref().unwrap();
@@ -296,6 +288,19 @@ impl MSMClient {
         )
     }
 
+    pub fn nof_pending_tasks_in_queue(&self) -> Result<u32> {
+        self.driver_client.ctrl_read_u32(
+            self.driver_client.cfg.ctrl_baseaddr,
+            INGO_MSM_ADDR::ADDR_HIF2CPU_C_NOF_PENDING_TASKS_IN_QUEUE,
+        )
+    }
+
+    pub fn get_precompute_factor(&self) -> u8 {
+        let params = self.loaded_binary_parameters();
+        let image_parameters = MSMImageParametrs::parse_image_params(params[1]);
+        image_parameters.hif2_cpu_c_precompute
+    }
+
     pub fn load_data_to_hbm(&self, points: &[u8], addr: u64, offset: u64) -> Result<()> {
         log::debug!("HBM adress: {:#X?}", &addr);
         self.driver_client.ctrl_write_u32(
@@ -328,11 +333,15 @@ impl MSMClient {
                 .unwrap();
         }
     }
+
+    pub fn get_scalar_size(&self) -> usize {
+        self.msm_cfg.scalar_size
+    }
 }
 
-#[derive(PackedStruct, Debug)]
-#[packed_struct(bit_numbering = "msb0")]
-pub struct MSMImageParametrs {
+/* #[derive(PackedStruct, Debug)]
+#[packed_struct(bit_numbering = "msb0")] */
+/* pub struct MSMImageParametrs {
     #[packed_field(bits = "28..=31", endian = "lsb")]
     pub hif2cpu_c_is_stub: u8,
     #[packed_field(bits = "20..=27", endian = "lsb")]
@@ -345,11 +354,28 @@ pub struct MSMImageParametrs {
     pub hif2_cpu_c_number_of_segments: u8,
     #[packed_field(bits = "0..=3", endian = "lsb")]
     pub hif2_cpu_c_place_holder: u8,
+} */
+#[derive(PackedStruct, Debug)]
+#[packed_struct(bit_numbering = "msb0")]
+pub struct MSMImageParametrs {
+    #[packed_field(bits = "28..=31", endian = "lsb")]
+    pub hif2cpu_c_is_stub: u8,
+    #[packed_field(bits = "24..=27", endian = "lsb")]
+    pub hif2_cpu_c_curve: u8,
+    #[packed_field(bits = "20..=23", endian = "lsb")]
+    pub hif2_cpu_c_number_of_ec_adders: u8,
+    #[packed_field(bits = "12..=19", endian = "lsb")]
+    pub hif2_cpu_c_buckets_mem_addr_width: u8,
+    #[packed_field(bits = "8..=11", endian = "lsb")]
+    pub hif2_cpu_c_number_of_segments: u8,
+    #[packed_field(bits = "0..=7", endian = "lsb")]
+    pub hif2_cpu_c_precompute: u8,
 }
 
 impl ParametersAPI for MSMImageParametrs {
     fn parse_image_params(params: u32) -> MSMImageParametrs {
-        let buf = params.reverse_bits().to_be_bytes();
+        //let buf = params.reverse_bits().to_be_bytes();
+        let buf = params.to_be_bytes();
         MSMImageParametrs::unpack(&buf).unwrap()
     }
 
@@ -374,6 +400,6 @@ impl ParametersAPI for MSMImageParametrs {
             "Number of segmemts: {:?}",
             self.hif2_cpu_c_number_of_segments
         );
-        log::debug!("Place Holder: {:?}", self.hif2_cpu_c_place_holder);
+        log::debug!("PreCompute: {:?}", self.hif2_cpu_c_precompute);
     }
 }

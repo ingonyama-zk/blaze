@@ -1,4 +1,8 @@
+use ark_bls12_377::G1Projective as bls377G1Projective;
+use ark_bls12_381::G1Projective as bls381G1Projective;
+
 use crate::msm::RunResults;
+
 use ingo_blaze::{driver_client::*, ingo_msm::*};
 use num_traits::Pow;
 use std::{
@@ -17,13 +21,17 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
     let max_exp: u32 = 1;
     let base = 2;
 
-    log::debug!("Timer generation start");
-    let start_gen = Instant::now();
-    let (points, scalars, _, results) =
-        msm::input_generator_bls12_381(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
-    let duration_gen = start_gen.elapsed();
-    log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
+    let mut points: Vec<u8> = Vec::new();
+    let mut scalars: Vec<u8> = Vec::new();
+    let mut results: Vec<bls381G1Projective> = Vec::new();
 
+    /*  log::debug!("Timer generation start");
+       let start_gen = Instant::now();
+       let (points, scalars, _, results) =
+           msm::input_generator_bls12_381(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
+       let duration_gen = start_gen.elapsed();
+       log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
+    */
     let mut run_results: Vec<RunResults> = Vec::new();
     for iter in low_exp..=max_exp {
         let msm_size = Pow::pow(base, iter) as usize;
@@ -39,7 +47,6 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         let driver = MSMClient::new(
             MSMInit {
                 mem_type: PointMemoryType::DMA,
-                is_precompute: true,
                 curve: Curve::BLS381,
             },
             dclient,
@@ -74,6 +81,22 @@ fn hbm_msm_bls12_381_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
+
+        if iter == low_exp {
+            (points, scalars, _, results) = msm::input_generator_bls12_381(
+                Pow::pow(base, max_exp) as usize,
+                driver.get_precompute_factor().into(),
+            );
+        }
+
+        let msm_size = Pow::pow(base, iter) as usize;
+        log::debug!("MSM size: {}", msm_size);
+        let mut points_to_run = vec![0; msm_size * 8 * 96];
+        let mut scalars_to_run = vec![0; msm_size * 32];
+
+        points_to_run.copy_from_slice(&points[0..msm_size * 8 * 96]);
+        scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
+
         driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
@@ -125,29 +148,37 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
     let max_exp: u32 = 1;
     let base = 2;
 
-    log::debug!("Timer generation start");
+    let mut points: Vec<u8> = Vec::new();
+    let mut scalars: Vec<u8> = Vec::new();
+    let mut results: Vec<bls377G1Projective> = Vec::new();
+    /*    log::debug!("Timer generation start");
     let start_gen = Instant::now();
     let (points, scalars, _, results) =
         msm::input_generator_bls12_377(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
     let duration_gen = start_gen.elapsed();
-    log::debug!("Time elapsed in input generation is: {:?}", duration_gen);
+    log::debug!("Time elapsed in input generation is: {:?}", duration_gen); */
 
     let mut run_results: Vec<RunResults> = Vec::new();
     for iter in low_exp..=max_exp {
         let msm_size = Pow::pow(base, iter) as usize;
+        /*     if iter == low_exp {
+            (points, scalars, _, results) =
+        msm::input_generator_bls12_377(Pow::pow(base, max_exp) as usize, PRECOMPUTE_FACTOR);
+        }
+
+
         log::debug!("MSM size: {}", msm_size);
         let mut points_to_run = vec![0; msm_size * 8 * 96];
         let mut scalars_to_run = vec![0; msm_size * 32];
 
         points_to_run.copy_from_slice(&points[0..msm_size * 8 * 96]);
-        scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
+        scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]); */
 
         log::info!("Create Driver API instance");
         let dclient = DriverClient::new(&id, DriverConfig::driver_client_cfg(CardType::C1100));
         let driver = MSMClient::new(
             MSMInit {
                 mem_type: PointMemoryType::HBM,
-                is_precompute: true,
                 curve: Curve::BLS377,
             },
             dclient,
@@ -183,6 +214,22 @@ fn hbm_msm_bls12_377_precomp_test() -> Result<(), Box<dyn std::error::Error>> {
         log::debug!("Timer start");
         let start_set_data = Instant::now();
         let start_full = Instant::now();
+
+        if iter == low_exp {
+            (points, scalars, _, results) = msm::input_generator_bls12_377(
+                Pow::pow(base, max_exp) as usize,
+                driver.get_precompute_factor().into(),
+            );
+        }
+
+        let msm_size = Pow::pow(base, iter) as usize;
+        log::debug!("MSM size: {}", msm_size);
+        let mut points_to_run = vec![0; msm_size * 8 * 96];
+        let mut scalars_to_run = vec![0; msm_size * 32];
+
+        points_to_run.copy_from_slice(&points[0..msm_size * 8 * 96]);
+        scalars_to_run.copy_from_slice(&scalars[0..msm_size * 32]);
+
         driver.set_data(MSMInput {
             points: None,
             scalars: scalars_to_run,
