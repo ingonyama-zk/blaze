@@ -333,6 +333,10 @@ impl MSMClient {
                 .unwrap();
         }
     }
+
+    pub fn get_scalar_size(&self) -> usize {
+        self.msm_cfg.scalar_size
+    }
 }
 
 /* #[derive(PackedStruct, Debug)]

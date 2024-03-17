@@ -15,6 +15,9 @@ use ::std::ops::{Add, Mul};
 use std::{fmt::Display, time::Duration};
 
 const LARGE_PARAM: usize = 256;
+const SCALAR_SIZE_BLS377: usize = 256;
+const SCALAR_SIZE_BLS381: usize = 256;
+const SCALAR_SIZE_BN254: usize = 256;
 
 fn get_large_param(nof_elements: usize) -> (bool, usize, usize, usize) {
     if nof_elements > LARGE_PARAM {
@@ -117,12 +120,12 @@ pub fn precompute_base_bls12_377(base: bls377G1Affine, precompute_factor: u32) -
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
 
-    let scalar_size_bls377= (LARGE_PARAM as f32/precompute_factor as f32).ceil() as u32;
+    let scalar_size_bls377 = (SCALAR_SIZE_BLS377 as f32 / precompute_factor as f32).ceil() as u32;
 
     for i in 1..precompute_factor {
         current_point = base;
         let coeff = bls377Fr::from(two.pow(scalar_size_bls377 * i));
-                current_point = current_point.mul(coeff).into_affine();
+        current_point = current_point.mul(coeff).into_affine();
         let x_bytes = current_point.x.into_repr().to_bytes_le();
         let y_bytes = current_point.y.into_repr().to_bytes_le();
         bases.extend_from_slice(&x_bytes);
@@ -165,7 +168,7 @@ pub fn result_check_bls12_377(
         )
     } else {
         log::debug!("Expected MSM result: {:}\n", msm_res.into_affine());
-        println!("{}     {}",point.to_string(), msm_res.into_affine().to_string());
+        //println!("{}     {}",point.to_string(), msm_res.into_affine().to_string());
         (
             point.is_on_curve(),
             point.to_string() == msm_res.into_affine().to_string(),
@@ -240,7 +243,7 @@ pub fn precompute_base_bn254(base: bn254G1Affine, precompute_factor: u32) -> Vec
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
 
-    let scalar_size_bn254= (LARGE_PARAM as f32/precompute_factor as f32).ceil() as u32;
+    let scalar_size_bn254 = (SCALAR_SIZE_BN254 as f32 / precompute_factor as f32).ceil() as u32;
 
     for i in 1..precompute_factor {
         current_point = base;
@@ -367,10 +370,10 @@ pub fn precompute_base_bls12_381(base: bls381G1Affine, precompute_factor: u32) -
     bases.extend_from_slice(&y_bytes);
     let two = num_bigint::BigUint::from(2u32);
 
-    let scalar_size_bls381= (LARGE_PARAM as f32/precompute_factor as f32).ceil() as u32;
+    let scalar_size_bls381 = (SCALAR_SIZE_BLS381 as f32 / precompute_factor as f32).ceil() as u32;
 
     for i in 1..precompute_factor {
-        current_point = base;        
+        current_point = base;
         let coeff = bls381Fr::from(two.pow(scalar_size_bls381 * i));
         current_point = current_point.mul(coeff).into_affine();
         let x_bytes = current_point.x.into_repr().to_bytes_le();
