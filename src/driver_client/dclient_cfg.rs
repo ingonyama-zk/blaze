@@ -1,6 +1,13 @@
 pub enum CardType {
     C1100,
 }
+#[derive(Debug, PartialEq, Eq)]
+pub enum BinType {
+    MSM = 0,
+    NTT = 1,
+    POSEIDON = 3,
+    NONE,
+}
 
 /// The [`DriverConfig`] is a struct that defines a set of 64-bit unsigned integer (`u64`)
 /// representing addreses memory space for different components of a FPGA.

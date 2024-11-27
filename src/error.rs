@@ -27,6 +27,8 @@ pub enum DriverClientError {
     LoadFailed { path: String },
     #[error("failed open file")]
     FileError(#[from] io::Error),
+    #[error("NOT MSM Binary")]
+    NotMsmBin,
     #[error("unknown driver client error")]
     Unknown,
 }
